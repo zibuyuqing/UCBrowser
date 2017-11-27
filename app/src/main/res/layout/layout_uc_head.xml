@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.zibuyuqing.ucbrowser.widget.BaseLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/themeBlue"
+    android:orientation="vertical"
+    android:layout_gravity="top"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <include layout="@layout/layout_head_weather"></include>
+    <include layout="@layout/layout_head_search_box"></include>
+    <include layout="@layout/layout_head_category"></include>
+    <include layout="@layout/layout_head_website"></include>
+</com.zibuyuqing.ucbrowser.widget.BaseLayout>

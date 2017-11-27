@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@drawable/search_box_bg"
+    android:padding="6dp"
+    android:layout_marginLeft="16dp"
+    android:layout_marginRight="16dp"
+    android:layout_marginTop="8dp"
+    android:layout_height="42dp">
+    <ImageView
+
+        android:layout_alignParentStart="true"
+        android:src ="@drawable/ic_search"
+        style="@style/SearchBoxImageIconStyle"/>
+    <ImageView
+        android:id="@+id/ivScan"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/ic_scan"
+        style="@style/SearchBoxImageIconStyle"/>
+    <ImageView
+        android:layout_toLeftOf="@id/ivScan"
+        android:src="@drawable/ic_voice"
+        style="@style/SearchBoxImageIconStyle" />
+    </RelativeLayout>

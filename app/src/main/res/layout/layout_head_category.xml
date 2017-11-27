@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="12dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:textColor="@color/windowBg"
+        android:drawableTop="@drawable/ic_website"
+        android:gravity="center_horizontal|bottom"
+        android:text="网址"
+        android:drawablePadding="8dp"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:textSize="12dp"
+        android:layout_height="match_parent" />
+    <TextView
+        android:textColor="@color/windowBg"
+        android:drawableTop="@drawable/ic_novel"
+        android:gravity="center_horizontal|bottom"
+        android:text="小说"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:textSize="12dp"
+        android:layout_height="match_parent" />
+    <TextView
+        android:textColor="@color/windowBg"
+        android:drawableTop="@drawable/ic_video"
+        android:gravity="center_horizontal|bottom"
+        android:text="视频"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:textSize="12dp"
+        android:layout_height="match_parent" />
+    <TextView
+        android:textColor="@color/windowBg"
+        android:drawableTop="@drawable/ic_funny"
+        android:gravity="center_horizontal|bottom"
+        android:text="奇趣"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:textSize="12dp"
+        android:layout_height="match_parent" />
+    <TextView
+        android:textColor="@color/windowBg"
+        android:drawableTop="@drawable/ic_cartoon"
+        android:gravity="center_horizontal|bottom"
+        android:text="漫画"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:textSize="12dp"
+        android:layout_height="match_parent" />
+</LinearLayout>
