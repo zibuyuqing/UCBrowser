@@ -17,10 +17,16 @@
                 android:id="@+id/llBezierLayout"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="190dp">
-                <include layout="@layout/layout_head_weather"></include>
-                <include layout="@layout/layout_head_search_box"></include>
-                <include layout="@layout/layout_head_category"></include>
+                android:layout_height="@dimen/bezier_layout_height">
+                <LinearLayout
+                    android:id="@+id/llBezierContains"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                    <include layout="@layout/layout_head_weather"></include>
+                    <include layout="@layout/layout_head_search_box"></include>
+                    <include layout="@layout/layout_head_category"></include>
+                </LinearLayout>
             </com.zibuyuqing.ucbrowser.widget.BezierLayout>
             <include layout="@layout/layout_head_website"></include>
             <FrameLayout
@@ -49,6 +55,7 @@
         <include
             android:visibility="gone"
             android:id="@+id/rlUCCoverLayout"
-            layout="@layout/layout_uc_cover_view"></include>
+            layout="@layout/layout_uc_cover_view">
+        </include>
     </FrameLayout>
 </com.zibuyuqing.ucbrowser.widget.UCHeadLayout>

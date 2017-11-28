@@ -2,7 +2,7 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="300dp">
+    android:layout_height="@dimen/bezier_layout_height">
         <TextView
             android:layout_centerInParent="true"
             android:id="@+id/ucCoverTip"

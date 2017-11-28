@@ -19,7 +19,6 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
     private float mScale;
     private boolean mTranslateEnable = true;
     private boolean mScaleEnable = false;
-    protected boolean mStop = false;
     public BaseLayout(Context context) {
         super(context);
     }

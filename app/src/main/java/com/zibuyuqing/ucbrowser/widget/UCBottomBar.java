@@ -62,6 +62,9 @@ public class UCBottomBar extends BaseLayout {
     @Override
     public void onScroll(float rate) {
         Log.e(TAG,"onScroll :: rate =:" + rate);
+        if(rate > 0){
+            return;
+        }
         ivForward.setAlpha(calculateBtnAlpha(rate));
         ivBack.setAlpha(calculateBtnAlpha(rate));
         flWindowNum.setAlpha(calculateBtnAlpha(rate));

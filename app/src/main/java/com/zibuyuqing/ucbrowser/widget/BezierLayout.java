@@ -13,6 +13,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
@@ -22,6 +23,7 @@ import com.zibuyuqing.ucbrowser.utils.ViewUtil;
  */
 
 public class BezierLayout extends BaseLayout {
+    private static final int FINAL_DISTANCE = 300;
     private Paint mPaint;
     private int mThemeColor;
     private Context mContext;
@@ -30,6 +32,9 @@ public class BezierLayout extends BaseLayout {
     private Path mPath = new Path();
     private int mHeight;
     private int mEdgeHeight;
+    private boolean mStartScroll = false;
+    private ViewGroup.LayoutParams mLayoutParams;
+    private LinearLayout mContains;
     public BezierLayout(Context context) {
         this(context,null);
     }
@@ -42,6 +47,12 @@ public class BezierLayout extends BaseLayout {
         super(context, attrs, defStyleAttr);
         mContext = context;
         init();
+    }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+        mContains = findViewById(R.id.llBezierContains);
     }
 
     private void init() {
@@ -74,26 +85,43 @@ public class BezierLayout extends BaseLayout {
 
     @Override
     public void onScroll(float rate) {
+        if(!mStartScroll){
+            return;
+        }
+        if(mLayoutParams == null){
+            mLayoutParams = getLayoutParams();
+        }
         if(rate >= 0) {
-            int finalDis = 100;
-            ViewGroup.LayoutParams lp = getLayoutParams();
-            int dis = (int) (finalDis * rate);
-            mEdgeHeight = (int) (mHeight + dis / 2);
+            int dis = (int) (FINAL_DISTANCE * rate);
+            mEdgeHeight = (int) (mHeight + dis * 0.5f);
             mControlPoint.set(mControlPoint.x, mHeight + dis);
-            if (lp != null) {
-                lp.height = mControlPoint.y;
-                setLayoutParams(lp);
-            }
-            requestLayout();
+            mContains.setScaleX(1.0f - rate * 0.2f);
+            mContains.setScaleY(1.0f - rate * 0.2f);
+            mContains.setTranslationY(dis * 0.5f);
+            mContains.setAlpha(1.0f - rate * 1.5f);
         } else {
             mControlPoint.set(0,mHeight);
         }
+        mLayoutParams.height = mControlPoint.y;
+        setLayoutParams(mLayoutParams);
+        requestLayout();
         super.onScroll(rate);
+    }
+
+    @Override
+    public void onStartScroll() {
+        mStartScroll = true;
+        super.onStartScroll();
+    }
+
+    @Override
+    public void onEndScroll() {
+        mStartScroll = false;
+        super.onEndScroll();
     }
 
     public void touch(float x, float y) {
         mControlPoint.set((int) x, mControlPoint.y);
-        Log.e("-----","mControlPoint :" + mControlPoint.x + ",y = " + y);
         invalidate();
     }
 

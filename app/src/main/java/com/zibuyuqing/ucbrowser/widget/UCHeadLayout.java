@@ -53,11 +53,24 @@ public class UCHeadLayout extends BaseLayout{
     }
 
     @Override
+    public void onStartScroll() {
+        mUCCoverLayout.setVisibility(VISIBLE);
+        mUCCoverLayout.setAlpha(0.f);
+        super.onStartScroll();
+    }
+
+    @Override
+    public void onEndScroll() {
+        super.onEndScroll();
+    }
+
+    @Override
     public void onScroll(float rate) {
         if(rate > 0) {
             mCoverTip.setTranslationY(100 * Math.abs(rate));
-            mStop = true;
+            mUCCoverLayout.setAlpha(rate * 1.5f);
         } else {
+            mUCCoverLayout.setVisibility(GONE);
             mForeground.setAlpha((int) (ALPHA_255 * Math.abs(rate)));
         }
         super.onScroll(rate);

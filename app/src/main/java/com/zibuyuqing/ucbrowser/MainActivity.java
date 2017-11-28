@@ -2,6 +2,7 @@ package com.zibuyuqing.ucbrowser;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewTreeObserver;
 
 import com.zibuyuqing.ucbrowser.widget.BaseLayout;
@@ -56,7 +57,14 @@ public class MainActivity extends AppCompatActivity {
         );
 
         mUCBottomBar = (UCBottomBar)findViewById(R.id.llUCBottomBar);
-
+        mUCBottomBar.findViewById(R.id.ivHome).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
+                    mUCRootView.back2Normal();
+                }
+            }
+        });
         mBezierLayout = (BezierLayout)findViewById(R.id.llBezierLayout);
         mUCRootView = (UCRootView) findViewById(R.id.ucRootView);
         mUCRootView.attachScrollStateListener(mTopSearchBar);
