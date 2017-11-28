@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.zibuyuqing.ucbrowser.widget.UCBottomBar xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/windowBg"
+    android:layout_alignParentBottom="true"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/gray" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dimen_96dp">
+        <LinearLayout
+            android:layout_gravity="top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/ivForward"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_forward" />
+            <ImageView
+                android:id="@+id/ivBack"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_back" />
+
+            <ImageView
+                android:id="@+id/ivMenu"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:padding="12dp"
+                android:src="@drawable/ic_menu" />
+
+            <FrameLayout
+                android:id="@+id/flWindowsNum"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_window" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textColor="@color/black" />
+            </FrameLayout>
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:padding="12dp"
+                android:src="@drawable/ic_home" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/dimen_96dp">
+            <TextView
+                android:id="@+id/tvHeadline"
+                android:gravity="center"
+                android:layout_gravity="bottom"
+                android:text="头条"
+                android:drawableLeft="@drawable/ic_headline"
+                android:paddingLeft="16dp"
+                android:layout_width="wrap_content"
+                android:drawablePadding="4dp"
+                android:layout_height="48dp" />
+            <TextView
+                android:id="@+id/tvVideo"
+                android:layout_width="wrap_content"
+                android:drawablePadding="4dp"
+                android:layout_height="48dp"
+                android:layout_gravity="bottom"
+                android:gravity="center"
+                android:drawableLeft="@drawable/ic_menu_video"
+                android:paddingLeft="16dp"
+                android:text="视频" />
+            <TextView
+                android:id="@+id/tvSubscribe"
+                android:drawableLeft="@drawable/ic_subscribe"
+                android:text="订阅"
+                android:layout_gravity="bottom"
+                android:gravity="center"
+                android:layout_width="wrap_content"
+                android:paddingLeft="26dp"
+                android:drawablePadding="4dp"
+                android:layout_height="48dp" />
+        </LinearLayout>
+    </FrameLayout>
+</com.zibuyuqing.ucbrowser.widget.UCBottomBar>

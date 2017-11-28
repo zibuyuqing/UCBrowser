@@ -9,4 +9,5 @@
     <color name="themePink">#ff8585</color>
     <color name="themeBlue">#3694c7</color>
     <color name="gray">#e2e2e2</color>
+    <color name="light_black">#55000000</color>
 </resources>

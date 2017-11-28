@@ -13,29 +13,6 @@
         android:id="@+id/llUCHeadLayout"
         layout="@layout/layout_uc_head">
     </include>
-
-    <FrameLayout
-        android:id="@+id/flUCNewsFlag"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/llUCHeadLayout"
-        android:background="@color/windowBg">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="1px"
-            android:layout_gravity="center"
-            android:background="@color/gray"></TextView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:background="@color/windowBg"
-            android:padding="8dp"
-            android:text="UC头条"
-            android:textColor="@color/gray" />
-    </FrameLayout>
     <include
         android:id="@+id/llUCNewsListLayout"
         layout="@layout/layout_uc_news"></include>
@@ -43,5 +20,9 @@
         android:visibility="invisible"
         android:id="@+id/llTopSearchBar"
         layout="@layout/layout_top_search_bar">
+    </include>
+    <include
+        android:id="@+id/llUCBottomBar"
+        layout="@layout/layout_uc_bottom_bar">
     </include>
 </com.zibuyuqing.ucbrowser.widget.UCRootView>

@@ -10,11 +10,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
-import android.view.View;
 import android.view.ViewConfiguration;
-import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
-import android.widget.Scroller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +26,11 @@ public class UCRootView extends RelativeLayout {
     private static final int MSG_FLING = 2222;
     private final static int TOUCH_STATE_REST = 0;
     private final static int TOUCH_STATE_SCROLLING = 1;
-    private float mInitialY;
+    private final static int NEWS_MODE = 3;
+    private final static int NORMAL_MODE = 4;
     private int mTouchSlop;
     private float mLastMotionY;
+    private float mLastMotionX;
     protected float mTotalMotionY;
     private Context mContext;
     private List<ScrollStateListener> mListeners = new ArrayList<>();
@@ -41,7 +40,8 @@ public class UCRootView extends RelativeLayout {
     private VelocityTracker mVelocityTracker;
     private int mFinalDistance;
     private Handler mHandler;
-    public void addScrollStateListener(ScrollStateListener listener){
+    private int mMode = NORMAL_MODE;
+    public void attachScrollStateListener(ScrollStateListener listener){
         mListeners.add(listener);
     }
     public void removeScrollStateListener(ScrollStateListener listener){
@@ -87,7 +87,8 @@ public class UCRootView extends RelativeLayout {
             @Override
             public void handleMessage(Message msg) {
                 if(msg.what == MSG_FLING){
-                    mTotalMotionY += FLING_SPEED;
+                    int speed = mMode == NORMAL_MODE ? -FLING_SPEED : FLING_SPEED;
+                    mTotalMotionY += speed;
                     onScroll(mTotalMotionY / mFinalDistance);
                     checkPoint();
                 }
@@ -105,6 +106,11 @@ public class UCRootView extends RelativeLayout {
             listener.onScroll(rate);
         }
     }
+    public void onTouch(float x,float y){
+        for(ScrollStateListener listener : mListeners){
+            listener.onTouch(x,y);
+        }
+    }
 
     public void onEndScroll(){
         for(ScrollStateListener listener : mListeners){
@@ -114,24 +120,36 @@ public class UCRootView extends RelativeLayout {
     public UCRootView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
-    private void determineScrollingStart(MotionEvent ev, float touchSlopScale) {
+    private boolean determineScrollingStart(MotionEvent ev, float touchSlopScale) {
 
         // Disallow scrolling if we started the gesture from outside the viewport
+        boolean scroll = false;
         final float y = ev.getY();
-        final int xDiff = (int) Math.abs(y - mLastMotionY);
+        final float x = ev.getX();
+        float deltaY = y - mLastMotionY;
+
+        final int yDiff = (int) Math.abs(deltaY);
 
         final int touchSlop = Math.round(touchSlopScale * mTouchSlop);
-        boolean xMoved = xDiff > touchSlop;
-        Log.e(TAG,"determineScrollingStart :: touchSlop =:" + touchSlop+",xDiff =:" + xDiff);
-        if (xMoved) {
+        boolean yMoved = yDiff > touchSlop;
+        Log.e(TAG,"determineScrollingStart :: touchSlop =:" + touchSlop+",xDiff =:" + yDiff);
+        if (yMoved) {
             // Scroll if the user moved far enough along the X axis
+            if(mMode == NEWS_MODE){
+                if(deltaY < 0){
+                    return false;
+                }
+            }
             mTouchState = TOUCH_STATE_SCROLLING;
             mLastMotionY = y;
+            mLastMotionY = x;
             onStartScroll();
+            scroll = true;
         }
+        return scroll;
     }
-    private void determineScrollingStart(MotionEvent ev) {
-        determineScrollingStart(ev, 1.0f);
+    private boolean determineScrollingStart(MotionEvent ev) {
+        return determineScrollingStart(ev, 1.0f);
     }
 
     @Override
@@ -142,6 +160,9 @@ public class UCRootView extends RelativeLayout {
         }
         final int action = ev.getAction();
         switch (action & MotionEvent.ACTION_MASK){
+            case MotionEvent.ACTION_DOWN:
+                mLastMotionY = ev.getY();
+                mLastMotionX = ev.getX();
             case MotionEvent.ACTION_MOVE: {
                 determineScrollingStart(ev);
                 Log.e(TAG,"onInterceptTouchEvent :: ACTION_MOVE");
@@ -150,32 +171,36 @@ public class UCRootView extends RelativeLayout {
         }
         return mTouchState != TOUCH_STATE_REST;
     }
-    private void flingUp(){
 
-    }
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (getChildCount() <= 0) return super.onTouchEvent(ev);
         acquireVelocityTrackerAndAddMovement(ev);
         final int action = ev.getAction();
+        float y = ev.getY();
+        float x = ev.getX();
+        onTouch(x,y);
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:{
-                mInitialY = ev.getY();
                 Log.e(TAG,"onTouchEvent :: ACTION_DOWN");
                 break;
             }
             case MotionEvent.ACTION_MOVE:{
                 if (mTouchState == TOUCH_STATE_SCROLLING) {
-                    float y = ev.getY();
-                    float deltaY = mLastMotionY - y;
+                    float deltaY = y - mLastMotionY;
+                    float deltaX = x - mLastMotionX;
                     mTotalMotionY += deltaY;
-                    onScroll(mTotalMotionY / mFinalDistance);
+                    if(Math.abs(deltaY) >= 1.0f) {
+                        float rate = mTotalMotionY / mFinalDistance;
+                        onScroll(rate);
+                    }
                     mLastMotionY = y;
+                    mLastMotionX = x;
                 } else {
                     determineScrollingStart(ev);
                 }
                 Log.e(TAG,"onTouchEvent :: ACTION_MOVE mTouchState =:" +mTouchState);
-                return mTotalMotionY <= mFinalDistance;
+                return attachToFinal();
             }
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
@@ -185,14 +210,26 @@ public class UCRootView extends RelativeLayout {
         }
         return true;
     }
-
+    private boolean attachToFinal(){
+        if(mMode == NEWS_MODE){
+            return mTotalMotionY >= 0;
+        }
+        return -mTotalMotionY >= mFinalDistance;
+    }
     private void checkPoint() {
-        if(mTotalMotionY < mFinalDistance){
+        if(!attachToFinal()){
             mHandler.sendEmptyMessage(MSG_FLING);
         }else {
             mHandler.removeMessages(MSG_FLING);
-            mTotalMotionY = mFinalDistance;
-            onScroll(1.0f);
+            if(mMode == NORMAL_MODE) {
+                mTotalMotionY = -mFinalDistance;
+                onScroll(-1.0f);
+                mMode = NEWS_MODE;
+            } else {
+                mTotalMotionY = 0;
+                onScroll(0.0f);
+                mMode = NORMAL_MODE;
+            }
             resetTouchState();
         }
     }
@@ -201,5 +238,6 @@ public class UCRootView extends RelativeLayout {
         void onStartScroll();
         void onScroll(float rate);
         void onEndScroll();
+        void onTouch(float x,float y);
     }
 }

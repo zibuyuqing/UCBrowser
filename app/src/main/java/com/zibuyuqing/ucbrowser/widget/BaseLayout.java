@@ -3,7 +3,6 @@ package com.zibuyuqing.ucbrowser.widget;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 
 /**
@@ -12,19 +11,25 @@ import android.widget.LinearLayout;
 
 public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateListener {
     private static final String TAG = "BaseLayout";
-    public static final int UP_WHEN_SCROLL_UP = 0;
-    public static final int DOWN_WHEN_SCROLL_UP = 1;
-    public static final int GROWUP_WHEN_SCROLL_UP = 2;
-    public static final int SHRINK_WHEN_SCROLL_UP = 3;
-    private int mStartY;
-    private int mEndY;
+    private int mFromPosition;
+    private int mToPosition;
     private float mStartScale;
     private float mEndScale;
-    private int mDirection;
     private int mDistance;
     private float mScale;
+    private boolean mTranslateEnable = true;
+    private boolean mScaleEnable = false;
+    protected boolean mStop = false;
     public BaseLayout(Context context) {
         super(context);
+    }
+
+    public void setTranslateEnable(boolean translateEnable) {
+        mTranslateEnable = translateEnable;
+    }
+
+    public void setScaleEnable(boolean scaleEnable) {
+        mScaleEnable = scaleEnable;
     }
 
     public BaseLayout(Context context, AttributeSet attrs) {
@@ -34,18 +39,18 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
     public BaseLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
-    public void initTranslationY(int startY,int endY){
-        mStartY = startY;
-        mEndY = endY;
-        mDistance = Math.abs(endY - startY);
-        setTranslationY(startY);
+    public void initTranslationY(int from, int to){
+        mFromPosition = from;
+        mToPosition = to;
+        setTranslationY(from);
+        mDistance = from - to;
     }
     public void initScale(float startScale,float endScale){
         mStartScale = startScale;
         mEndScale = endScale;
         setScaleX(startScale);
         setScaleY(startScale);
-        mScale = Math.abs(endScale - startScale);
+        mScale = endScale - startScale;
     }
     private void setScaleXY(float rate){
         setScaleX(calculateScale(rate));
@@ -55,12 +60,9 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
         return mStartScale + mScale * rate;
     }
     private float calculateTransY(float rate){
-        return mStartY + mDistance * rate;
+        return mFromPosition + mDistance * rate;
     }
 
-    public void setDirection(int direction){
-        mDirection = direction;
-    }
     @Override
     public void onStartScroll() {
         Log.e(TAG,"onStartScroll");
@@ -70,25 +72,25 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
     @Override
     public void onScroll(float rate) {
         Log.e(TAG,"onScroll rate =:" + rate);
-        switch (mDirection){
-            case UP_WHEN_SCROLL_UP:
-                setTranslationY(calculateTransY(-rate));
-                break;
-            case DOWN_WHEN_SCROLL_UP:
-                setTranslationY(calculateTransY(rate));
-                break;
-            case GROWUP_WHEN_SCROLL_UP:
-                setScaleXY(rate);
-                break;
-            case SHRINK_WHEN_SCROLL_UP:
-                setScaleXY(-rate);
-                break;
+        if(rate > 0){
+            return;
         }
-
+        if(mTranslateEnable){
+            setTranslationY(calculateTransY(rate));
+        }
+        if(mScaleEnable){
+            setScaleXY(-rate);
+        }
     }
 
     @Override
     public void onEndScroll() {
         Log.e(TAG,"onEndScroll");
+    }
+
+
+    @Override
+    public void onTouch(float x, float y) {
+
     }
 }
