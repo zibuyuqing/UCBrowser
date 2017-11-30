@@ -1,4 +1,4 @@
-package com.zibuyuqing.ucbrowser.widget;
+package com.zibuyuqing.ucbrowser.widget.root;
 
 import android.content.Context;
 import android.os.Handler;
@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
@@ -155,6 +156,7 @@ public class UCRootView extends RelativeLayout {
         }
         return mTouchState != TOUCH_STATE_REST;
     }
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (getChildCount() <= 0) return super.onTouchEvent(ev);
@@ -205,7 +207,7 @@ public class UCRootView extends RelativeLayout {
         }
         if(!attachToFinal()){
             mHandler.sendEmptyMessage(MSG_FLING);
-        }else {
+        } else {
             mHandler.removeMessages(MSG_FLING);
             if(mMode == NORMAL_MODE) {
                 mTotalMotionY = -mFinalDistance;

@@ -28,4 +28,7 @@ dependencies {
     compile "com.android.support:design:$rootProject.supportLibraryVersion"
     compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha7'
     testCompile 'junit:junit:4.12'
+    //TODO butter knife
+    compile 'com.jakewharton:butterknife:8.7.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.7.0'
 }

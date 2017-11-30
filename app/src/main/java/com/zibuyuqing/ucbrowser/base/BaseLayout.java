@@ -1,9 +1,12 @@
-package com.zibuyuqing.ucbrowser.widget;
+package com.zibuyuqing.ucbrowser.base;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.LinearLayout;
+
+import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 
 /**
  * Created by Xijun.Wang on 2017/11/27.
@@ -19,10 +22,23 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
     private float mScale;
     private boolean mTranslateEnable = true;
     private boolean mScaleEnable = false;
+    protected Context mContext;
+    protected Resources mRes;
     public BaseLayout(Context context) {
-        super(context);
+        this(context,null);
+    }
+    public BaseLayout(Context context, AttributeSet attrs) {
+        this(context, attrs,0);
     }
 
+    public BaseLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        mContext = context;
+        init();
+    }
+    protected void init(){
+        mRes = mContext.getResources();
+    }
     public void setTranslateEnable(boolean translateEnable) {
         mTranslateEnable = translateEnable;
     }
@@ -31,13 +47,6 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
         mScaleEnable = scaleEnable;
     }
 
-    public BaseLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
-    public BaseLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
     public void initTranslationY(int from, int to){
         mFromPosition = from;
         mToPosition = to;
@@ -59,6 +68,7 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
         return mStartScale + mScale * rate;
     }
     private float calculateTransY(float rate){
+        Log.e(TAG,"rate :: =;" + rate);
         return mFromPosition + mDistance * rate;
     }
 

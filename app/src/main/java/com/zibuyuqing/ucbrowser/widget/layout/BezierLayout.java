@@ -1,21 +1,18 @@
-package com.zibuyuqing.ucbrowser.widget;
+package com.zibuyuqing.ucbrowser.widget.layout;
 
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
 import com.zibuyuqing.ucbrowser.R;
+import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
 
 /**
@@ -23,10 +20,9 @@ import com.zibuyuqing.ucbrowser.utils.ViewUtil;
  */
 
 public class BezierLayout extends BaseLayout {
-    private static final int FINAL_DISTANCE = 300;
+    public static final int FINAL_DISTANCE = 300;
     private Paint mPaint;
     private int mThemeColor;
-    private Context mContext;
     private Point mControlPoint;
     private int mScreenWidth;
     private Path mPath = new Path();
@@ -34,7 +30,7 @@ public class BezierLayout extends BaseLayout {
     private int mEdgeHeight;
     private boolean mStartScroll = false;
     private ViewGroup.LayoutParams mLayoutParams;
-    private LinearLayout mContains;
+    private View mContain;
     public BezierLayout(Context context) {
         this(context,null);
     }
@@ -45,22 +41,21 @@ public class BezierLayout extends BaseLayout {
 
     public BezierLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mContext = context;
-        init();
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mContains = findViewById(R.id.llBezierContains);
+        mContain = findViewById(R.id.llBezierContain);
     }
 
-    private void init() {
-        Resources res = mContext.getResources();
+    @Override
+    protected void init() {
+        super.init();
         mScreenWidth = ViewUtil.getScreenSize(mContext).x;
-        mHeight = res.getDimensionPixelSize(R.dimen.bezier_layout_height);
+        mHeight = mRes.getDimensionPixelSize(R.dimen.bezier_layout_height);
         mEdgeHeight = mHeight;
-        mThemeColor = res.getColor(R.color.themeBlue,null);
+        mThemeColor = mRes.getColor(R.color.themeBlue,null);
         Log.e("-----","---------------");
         mControlPoint = new Point(0,mHeight);
         mPaint = new Paint();
@@ -68,6 +63,7 @@ public class BezierLayout extends BaseLayout {
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.FILL);
     }
+
     private void drawBg(Canvas canvas) {
         mPath.reset();
         mPath.moveTo(0,0);
@@ -95,10 +91,10 @@ public class BezierLayout extends BaseLayout {
             int dis = (int) (FINAL_DISTANCE * rate);
             mEdgeHeight = (int) (mHeight + dis * 0.5f);
             mControlPoint.set(mControlPoint.x, mHeight + dis);
-            mContains.setScaleX(1.0f - rate * 0.2f);
-            mContains.setScaleY(1.0f - rate * 0.2f);
-            mContains.setTranslationY(dis * 0.5f);
-            mContains.setAlpha(1.0f - rate * 1.5f);
+            mContain.setScaleX(1.0f - rate * 0.2f);
+            mContain.setScaleY(1.0f - rate * 0.2f);
+            mContain.setTranslationY(dis * 0.5f);
+            mContain.setAlpha(1.0f - rate * 1.5f);
         } else {
             mControlPoint.set(0,mHeight);
         }

@@ -1,13 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.zibuyuqing.ucbrowser.widget.BaseLayout
+<com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_below="@id/llUCHeadLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <android.support.v7.widget.RecyclerView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorAccent"
-        android:id="@+id/rvUCNewsList">
-    </android.support.v7.widget.RecyclerView>
-</com.zibuyuqing.ucbrowser.widget.BaseLayout>
+        android:layout_height="@dimen/dimen_36dp"
+        android:background="@color/windowBg">
+        <FrameLayout
+            android:id="@+id/flUCNewsFlag"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:layout_gravity="center"
+                android:background="@color/gray">
+            </TextView>
+            <TextView
+                android:background="@color/windowBg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:padding="8dp"
+                android:text="UC头条"
+                android:textColor="@color/gray" />
+        </FrameLayout>
+        <LinearLayout
+            android:id="@+id/llUCNewsTabBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <android.support.design.widget.TabLayout
+                android:id="@+id/tlUCNewsTab"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                app:tabMinWidth="@dimen/dimen_48dp"
+                app:tabMode="scrollable"
+                app:tabIndicatorHeight="0dp"
+                app:tabSelectedTextColor="@color/themeBlue">
+            </android.support.design.widget.TabLayout>
+            <ImageView
+                android:padding="4dp"
+                android:src="@drawable/ic_add"
+                android:layout_width="@dimen/dimen_36dp"
+                android:layout_height="match_parent" />
+        </LinearLayout>
+    </FrameLayout>
+    <android.support.v4.view.ViewPager
+        android:id="@+id/vpUCNewsPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </android.support.v4.view.ViewPager>
+</com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout>

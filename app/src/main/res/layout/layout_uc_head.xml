@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.zibuyuqing.ucbrowser.widget.UCHeadLayout
+<com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_gravity="top"
-    android:foreground="@color/light_black"
+    android:foreground="@color/lightBlack"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <LinearLayout
+            android:id="@+id/llHeadContain"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <com.zibuyuqing.ucbrowser.widget.BezierLayout
+            <com.zibuyuqing.ucbrowser.widget.layout.BezierLayout
                 android:id="@+id/llBezierLayout"
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/bezier_layout_height">
                 <LinearLayout
-                    android:id="@+id/llBezierContains"
+                    android:id="@+id/llBezierContain"
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
@@ -27,30 +28,8 @@
                     <include layout="@layout/layout_head_search_box"></include>
                     <include layout="@layout/layout_head_category"></include>
                 </LinearLayout>
-            </com.zibuyuqing.ucbrowser.widget.BezierLayout>
+            </com.zibuyuqing.ucbrowser.widget.layout.BezierLayout>
             <include layout="@layout/layout_head_website"></include>
-            <FrameLayout
-                android:id="@+id/flUCNewsFlag"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/llUCHeadLayout"
-                android:background="@color/windowBg">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="1px"
-                    android:layout_gravity="center"
-                    android:background="@color/gray"></TextView>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:background="@color/windowBg"
-                    android:padding="8dp"
-                    android:text="UC头条"
-                    android:textColor="@color/gray" />
-            </FrameLayout>
         </LinearLayout>
         <include
             android:visibility="gone"
@@ -58,4 +37,4 @@
             layout="@layout/layout_uc_cover_view">
         </include>
     </FrameLayout>
-</com.zibuyuqing.ucbrowser.widget.UCHeadLayout>
+</com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout>

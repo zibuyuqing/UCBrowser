@@ -1,13 +1,12 @@
-package com.zibuyuqing.ucbrowser.widget;
+package com.zibuyuqing.ucbrowser.widget.layout;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 
 import com.zibuyuqing.ucbrowser.R;
+import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
 
 /**
@@ -28,12 +27,12 @@ public class UCBottomBar extends BaseLayout {
 
     public UCBottomBar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
     }
-
-    private void init() {
-        mScreenWidth = ViewUtil.getScreenSize(getContext()).x;
-        mHalfHeight = getResources().getDimensionPixelSize(R.dimen.dimen_48dp);
+    @Override
+    protected void init() {
+        super.init();
+        mScreenWidth = ViewUtil.getScreenSize(mContext).x;
+        mHalfHeight = mRes.getDimensionPixelSize(R.dimen.dimen_48dp);
         setTranslationY(mHalfHeight);
     }
 

@@ -6,73 +6,79 @@
     android:orientation="vertical"
     android:layout_height="match_parent">
     <LinearLayout
-        android:layout_marginTop="12dp"
+        android:id="@+id/llUCHeadWebsiteContain"
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <TextView
-            android:drawableTop="@drawable/ic_baidu"
-            android:text="百度"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1"/>
-        <TextView
-            android:drawableTop="@drawable/ic_sina"
-            android:text="新浪"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1"/>
-        <TextView
-            android:drawableTop="@drawable/ic_taobao"
-            android:text="淘宝"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1" />
-        <TextView
-            android:drawableTop="@drawable/ic_tianmao"
-            android:text="天猫"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1"/>
-        <TextView
-            android:drawableTop="@drawable/ic_aiqiyi"
-            android:text="爱奇艺"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1" />
-        <TextView
-            android:drawableTop="@drawable/ic_58"
-            android:text="同城"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_marginTop="8dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:drawableTop="@drawable/ic_dangdang"
-            android:text="当当"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1" />
-        <TextView
-            android:drawableTop="@drawable/ic_douban"
-            android:text="豆瓣"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1" />
-        <TextView
-            android:drawableTop="@drawable/ic_youku"
-            android:text="优酷"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1" />
-        <TextView
-            android:drawableTop="@drawable/ic_jingdong"
-            android:text="京东"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1"/>
-        <TextView
-            android:drawableTop="@drawable/ic_souhu"
-            android:text="搜狐"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1" />
-        <TextView
-            android:drawableTop="@drawable/ic_more_site"
-            android:text="更多"
-            style="@style/WebsiteTextViewStyle"
-            android:layout_weight="1" />
+        <LinearLayout
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:drawableTop="@drawable/ic_baidu"
+                android:text="百度"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1"/>
+            <TextView
+                android:drawableTop="@drawable/ic_sina"
+                android:text="新浪"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1"/>
+            <TextView
+                android:drawableTop="@drawable/ic_taobao"
+                android:text="淘宝"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1" />
+            <TextView
+                android:drawableTop="@drawable/ic_tianmao"
+                android:text="天猫"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1"/>
+            <TextView
+                android:drawableTop="@drawable/ic_aiqiyi"
+                android:text="爱奇艺"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1" />
+            <TextView
+                android:drawableTop="@drawable/ic_58"
+                android:text="同城"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:drawableTop="@drawable/ic_dangdang"
+                android:text="当当"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1" />
+            <TextView
+                android:drawableTop="@drawable/ic_douban"
+                android:text="豆瓣"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1" />
+            <TextView
+                android:drawableTop="@drawable/ic_youku"
+                android:text="优酷"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1" />
+            <TextView
+                android:drawableTop="@drawable/ic_jingdong"
+                android:text="京东"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1"/>
+            <TextView
+                android:drawableTop="@drawable/ic_souhu"
+                android:text="搜狐"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1" />
+            <TextView
+                android:drawableTop="@drawable/ic_more_site"
+                android:text="更多"
+                style="@style/WebsiteTextViewStyle"
+                android:layout_weight="1" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>
