@@ -36,8 +36,10 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     public static final int INVALID_POSITION = -1;
     public static final float PROGRESS_STEP = 0.2f;
     public static final float PROGRESS_START = 0.61f;
+    public static final float DEFAULT_VIEW_MAX_SCALE = 0.95f;
+    public static final float DEFAULT_VIEW_MIN_SCALE = 0.8f;
     private StackAdapter mStackAdapter;
-    private int mSelectPosition = 0;
+    private int mSelectPosition = 4;
     private List<ViewHolder> mViewHolders;
     private int mDuration;
     private OverScroller mScroller;
@@ -56,6 +58,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private float mViewMaxTop;
     private float mViewMinScale;
     private float mViewMaxScale;
+    private float mViewMinAlpha;
+    private float mViewMaxAlpha;
     private final ViewDataObserver mObserver = new ViewDataObserver();
     private boolean mInterceptedBySwipeHelper;
     private SwipeHelper mSwipeHelper;
@@ -63,9 +67,10 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private float mTotalMotionY;
     private float mInitialMotionX;
     private float mLastMotionX;
+    private float mOffsetProgress;
+    private int mDirection;
     private float mInitialMotionY;
     private boolean mIsScrolling;
-
     public UCStackView(@NonNull Context context) {
         this(context, null);
     }
@@ -93,8 +98,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mSreenHeight = ViewUtil.getScreenSize(mContext).y;
         mViewMinTop = 0;
         mViewMaxTop = mSreenHeight;
-        mViewMinScale = 0.8f;
-        mViewMaxScale = 0.95f;
+        mViewMinScale = DEFAULT_VIEW_MIN_SCALE;
+        mViewMaxScale = DEFAULT_VIEW_MAX_SCALE;
         float densityScale = resources.getDisplayMetrics().density;
         mSwipeHelper = new SwipeHelper(mContext, SwipeHelper.X, this, densityScale, mTouchSlop);
         mSwipeHelper.setMinAlpha(1f);
@@ -122,16 +127,15 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         float progress;
         float transY;
         View child;
-        float topSpace = mViewMaxTop - mViewMinTop ;
-        float scrollRate = mTotalMotionY / topSpace;
         for (int i = 0; i < childCount; i++) {
             child = getChildAt(i);
-            progress = (PROGRESS_START  + (i - mSelectPosition) * PROGRESS_STEP) - scrollRate;
+            progress = calculateViewProgress(i);
             transY = calculateProgress2TransY(progress);
-            Log.e(TAG,"layoutChildren :: progress =:" + progress+",transY =:" + transY);
+            Log.e(TAG, "layoutChildren :: progress =:" + progress + ",transY =:" + transY);
             translateViewY(transY, child);
             scaleView(calculateProgress2Scale(progress), child);
         }
+        invalidate();
     }
 
     public void setAdapter(StackAdapter adapter) {
@@ -191,19 +195,58 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         view.setAlpha(alpha);
     }
 
-    /** calculate from the progress along the curve to a screen coordinate. */
+    /**
+     * calculate from the progress along the curve to a screen coordinate.
+     */
     int calculateProgress2TransY(float progress) {
-        if(progress < 0) return (int) mViewMinTop;
-        if(progress > 1) return (int) mViewMaxTop;
-        return (int) (mViewMinTop +  Math.pow(progress,3) * (mViewMaxTop - mViewMinTop));
+        if (progress < 0) return (int) mViewMinTop;
+        if (progress > 1) return (int) mViewMaxTop;
+        return (int) (mViewMinTop + Math.pow(progress, 3) * (mViewMaxTop - mViewMinTop));
     }
-    /** calculate from the progress along the curve to a scale. */
+
+    /**
+     * calculate from the progress along the curve to a scale.
+     */
     float calculateProgress2Scale(float progress) {
         if (progress < 0) return mViewMinScale;
         if (progress > 1) return mViewMaxScale;
         float scaleRange = (mViewMaxScale - mViewMinScale);
         float scale = mViewMinScale + (progress * scaleRange);
         return scale;
+    }
+
+    /**
+     * calculate from the progress along the curve to a scale.
+     */
+    float calculateProgress2Alpha(float progress) {
+        if (progress < 0) return mViewMinScale;
+        if (progress > 1) return mViewMaxScale;
+        float scaleRange = (mViewMaxScale - mViewMinScale);
+        float scale = mViewMinScale + (progress * scaleRange);
+        return scale;
+    }
+    private float getScrollRate(){
+        float topSpace = mViewMaxTop - mViewMinTop;
+        return mTotalMotionY / topSpace;
+    }
+    private float calculateViewProgress(int index){
+        return (PROGRESS_START + (index - mSelectPosition) * PROGRESS_STEP) - getScrollRate();
+    }
+
+
+    private boolean attachToFinalY(){
+        View child;
+        switch (mDirection){
+            case 1:
+                child = getChildAt(getChildCount() -1);
+                Log.e(TAG,"attachToFinalY :: 1 child.getTranslationY() =:" +child.getTranslationY());
+                return child.getTranslationY() < 100;
+            case -1:
+                child = getChildAt(0);
+                Log.e(TAG,"attachToFinalY :: -1 child.getTranslationY() =:" +child.getTranslationY());
+                return child.getTranslationY() > mSreenHeight / 2;
+        }
+        return true;
     }
     private ViewHolder getViewHolder(int position) {
         if (position == INVALID_POSITION) {
@@ -242,15 +285,15 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 mScroller.forceFinished(true);
                 // Initialize the velocity tracker
                 initOrResetVelocityTracker();
-//                mVelocityTracker.addMovement(createMotionEventForStackScroll(ev));
+                mVelocityTracker.addMovement(ev);
                 break;
             }
             case MotionEvent.ACTION_MOVE: {
                 if (mActivePointerId == INVALID_POINTER) break;
-                Log.e(TAG,"onInterceptTouchEvent :: ACTION_MOVE = ");
+                Log.e(TAG, "onInterceptTouchEvent :: ACTION_MOVE = ");
                 // Initialize the velocity tracker if necessary
                 initVelocityTrackerIfNotExists();
-//                mVelocityTracker.addMovement(createMotionEventForStackScroll(ev));
+                mVelocityTracker.addMovement(ev);
 
                 int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 /// M: [ALPS01903572] handle multi-touch exception @{
@@ -283,10 +326,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 // Animate the scroll back if we've cancelled
                 // mScroller.animateBoundScroll();
                 // Reset the drag state and the velocity tracker
-                mIsScrolling = false;
-                mActivePointerId = INVALID_POINTER;
-//                mTotalMotionY = 0;
-                recycleVelocityTracker();
+                resetTouchState();
                 break;
             }
         }
@@ -315,7 +355,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 mScroller.forceFinished(true);
                 // Initialize the velocity tracker
                 initOrResetVelocityTracker();
-                // mVelocityTracker.addMovement(createMotionEventForStackScroll(ev));
+                mVelocityTracker.addMovement(ev);
                 // Disallow parents from intercepting touch events
                 break;
             }
@@ -328,13 +368,13 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             }
             case MotionEvent.ACTION_MOVE: {
                 if (mActivePointerId == INVALID_POINTER) break;
-                Log.e(TAG,"onTouchEvent :: ACTION_MOVE = ");
-                // mVelocityTracker.addMovement(createMotionEventForStackScroll(ev));
+                Log.e(TAG, "onTouchEvent :: ACTION_MOVE = ");
+                mVelocityTracker.addMovement(ev);
 
                 int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 int x = (int) ev.getX(activePointerIndex);
                 int y = (int) ev.getY(activePointerIndex);
-                int yTotal = Math.abs(y - (int)mInitialMotionY);
+                int yTotal = Math.abs(y - (int) mInitialMotionY);
                 float deltaP = mLastMotionY - y;
                 if (!mIsScrolling) {
                     if (yTotal > mTouchSlop) {
@@ -342,7 +382,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                     }
                 }
                 if (mIsScrolling) {
-                    layoutChildren();
+                    scroll();
                     /*
                     float curStackScroll = mScroller.getStackScroll();
                     float overScrollAmount = mScroller.getScrollAmountOutOfBounds(curStackScroll + deltaP);
@@ -355,22 +395,24 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                     }
                      mScroller.setStackScroll(curStackScroll + deltaP);
                     */
+                    mTotalMotionY += deltaP;
+                    if(deltaP > 0){
+                        mDirection = 1;
+                    }else if(deltaP < 0){
+                        mDirection = -1;
+                    }
                 }
                 mLastMotionX = x;
                 mLastMotionY = y;
-                mTotalMotionY += deltaP;
                 break;
             }
             case MotionEvent.ACTION_UP: {
                 mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
                 int velocity = (int) mVelocityTracker.getYVelocity(mActivePointerId);
                 if (mIsScrolling && (Math.abs(velocity) > mMinimumVelocity)) {
-                    // fling
+                    fling(velocity);
                 }
-                mActivePointerId = INVALID_POINTER;
-                mIsScrolling = false;
-//                mTotalMotionY = 0;
-                recycleVelocityTracker();
+                resetTouchState();
                 break;
             }
             case MotionEvent.ACTION_POINTER_UP: {
@@ -393,38 +435,52 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                     mScroller.animateBoundScroll();
                 }
                 */
-                mActivePointerId = INVALID_POINTER;
-                mIsScrolling = false;
-                mTotalMotionY = 0;
-                recycleVelocityTracker();
+                resetTouchState();
                 break;
             }
         }
         return true;
     }
 
-    @Override
-    protected void onOverScrolled(int scrollX, int scrollY, boolean clampedX, boolean clampedY) {
-        super.onOverScrolled(scrollX, scrollY, clampedX, clampedY);
-    }
 
-    @Override
-    protected int computeVerticalScrollOffset() {
-        return super.computeVerticalScrollOffset();
+    private void scroll() {
+        layoutChildren();
     }
+    private void resetTouchState(){
+        mActivePointerId = INVALID_POINTER;
+        mIsScrolling = false;
+        // mTotalMotionY = 0;
+        recycleVelocityTracker();
+    }
+    private void scrollToPositivePosition(){
 
+    }
     @Override
     public void computeScroll() {
+        Log.e(TAG,"computeScroll :: attachToFinalY :" + attachToFinalY());
+        if(mScroller.computeScrollOffset()) {
+            if (attachToFinalY()) {
+                int currentVelocity = (int) (mDirection * mScroller.getCurrVelocity() / 5);
+                mScroller.forceFinished(true);
+                Log.e(TAG, "computeScroll :: currentVelocity =:" + - currentVelocity + ",mTotalMotionY =:" + mTotalMotionY);
+                mScroller.fling(0, (int) mTotalMotionY, 0, - currentVelocity, 0,
+                        0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                mDirection *= -1;
+                invalidate();
+            } else {
+                mTotalMotionY = mScroller.getCurrY();
+                Log.e(TAG, "computeScroll :: getScrollY() =:" + mScroller.getCurrY() + ",mTotalMotionY =:" + mTotalMotionY);
+                scroll();
+            }
+        }
         super.computeScroll();
     }
 
     public void fling(int velocity) {
-
-    }
-
-    @Override
-    public void scrollTo(int x, int y) {
-        super.scrollTo(x, y);
+        mScroller.fling(0, (int) mTotalMotionY, 0, - velocity, 0,
+                0, Integer.MIN_VALUE, Integer.MAX_VALUE);
+        Log.e(TAG, "fling :: getScrollY() =:" + getScrollY()+"mViewMaxTop + mTotalMotionY ==:" +(mViewMaxTop - mTotalMotionY));
+        invalidate();
     }
 
     @Override

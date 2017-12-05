@@ -1,14 +1,11 @@
 package com.zibuyuqing.ucbrowser;
 
 import android.app.Activity;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.view.LayoutInflater;
 
-import com.zibuyuqing.ucbrowser.ui.fragment.UCPagerAdapter;
-import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
+import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
 import com.zibuyuqing.ucbrowser.widget.stackview.UCStackView;
 
 import java.util.Arrays;

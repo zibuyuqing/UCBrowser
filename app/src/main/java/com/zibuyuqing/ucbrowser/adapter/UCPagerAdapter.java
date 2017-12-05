@@ -1,4 +1,4 @@
-package com.zibuyuqing.ucbrowser.ui.fragment;
+package com.zibuyuqing.ucbrowser.adapter;
 
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
