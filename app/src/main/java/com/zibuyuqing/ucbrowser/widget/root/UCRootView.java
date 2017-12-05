@@ -85,23 +85,23 @@ public class UCRootView extends RelativeLayout {
             }
         };
     }
-    public void onStartScroll(){
+    private void onStartScroll(){
         for(ScrollStateListener listener : mListeners){
             listener.onStartScroll();
         }
     }
-    public void onScroll(float rate){
+    private void onScroll(float rate){
         for(ScrollStateListener listener : mListeners){
             listener.onScroll(rate);
         }
     }
-    public void onTouch(float x,float y){
+    private void onTouch(float x,float y){
         for(ScrollStateListener listener : mListeners){
             listener.onTouch(x,y);
         }
     }
 
-    public void onEndScroll(){
+    private void onEndScroll(){
         for(ScrollStateListener listener : mListeners){
             listener.onEndScroll();
         }
@@ -111,19 +111,18 @@ public class UCRootView extends RelativeLayout {
     }
     private boolean determineScrollingStart(MotionEvent ev, float touchSlopScale) {
 
-        // Disallow scrolling if we started the gesture from outside the viewport
         boolean scroll = false;
         final float y = ev.getY();
-        final float x = ev.getX();
+        // final float x = ev.getX();
         float deltaY = y - mLastMotionY;
 
         final int yDiff = (int) Math.abs(deltaY);
 
         final int touchSlop = Math.round(touchSlopScale * mTouchSlop);
         boolean yMoved = yDiff > touchSlop;
-        Log.e(TAG,"determineScrollingStart :: touchSlop =:" + touchSlop+",xDiff =:" + yDiff);
+        Log.i(TAG,"determineScrollingStart :: touchSlop =:" + touchSlop+",xDiff =:" + yDiff);
         if (yMoved) {
-            // Scroll if the user moved far enough along the X axis
+
             if(mMode == NEWS_MODE){
                 return false;
             }
@@ -150,7 +149,7 @@ public class UCRootView extends RelativeLayout {
                 mLastMotionX = ev.getX();
             case MotionEvent.ACTION_MOVE: {
                 determineScrollingStart(ev);
-                Log.e(TAG,"onInterceptTouchEvent :: ACTION_MOVE");
+                Log.i(TAG,"onInterceptTouchEvent :: ACTION_MOVE");
                 break;
             }
         }
@@ -167,7 +166,7 @@ public class UCRootView extends RelativeLayout {
         onTouch(x,y);
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:{
-                Log.e(TAG,"onTouchEvent :: ACTION_DOWN");
+                Log.i(TAG,"onTouchEvent :: ACTION_DOWN");
                 break;
             }
             case MotionEvent.ACTION_MOVE:{
@@ -182,15 +181,16 @@ public class UCRootView extends RelativeLayout {
                 } else {
                     determineScrollingStart(ev);
                 }
-                Log.e(TAG,"onTouchEvent :: ACTION_MOVE mTouchState =:" +mTouchState);
+                Log.i(TAG,"onTouchEvent :: ACTION_MOVE mTouchState =:" +mTouchState);
                 mLastMotionY = y;
                 mLastMotionX = x;
+                //
                 return attachToFinal();
             }
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 checkPoint();
-                Log.e(TAG,"onTouchEvent :: ACTION_UP");
+                Log.i(TAG,"onTouchEvent :: ACTION_UP");
                 break;
         }
         return true;
@@ -233,6 +233,6 @@ public class UCRootView extends RelativeLayout {
         void onStartScroll();
         void onScroll(float rate);
         void onEndScroll();
-        void onTouch(float x,float y);
+        void onTouch(float x,float y);//手指位置
     }
 }

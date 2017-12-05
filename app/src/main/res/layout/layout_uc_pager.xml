@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView
+        android:id="@+id/ivPagePreview"
+        android:scaleType="centerCrop"
+        android:layout_gravity="center"
+        android:src="@drawable/test_uc_screen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+    <RelativeLayout
+        android:id="@+id/rlPageHead"
+        android:background="@color/windowBg"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dimen_48dp">
+        <ImageView
+            android:id="@+id/ivPageHome"
+            android:padding="12dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_home"
+            android:layout_width="@dimen/dimen_48dp"
+            android:layout_height="match_parent" />
+        <TextView
+            android:id="@+id/tvPagerUC"
+            android:textSize="20dp"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/ivPageHome"
+            android:text="UC"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <ImageView
+            android:id="@+id/ivPageClose"
+            android:layout_alignParentRight="true"
+            android:padding="14dp"
+            android:src="@drawable/ic_close"
+            android:layout_width="@dimen/dimen_48dp"
+            android:layout_height="match_parent" />
+    </RelativeLayout>
+</com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView>
