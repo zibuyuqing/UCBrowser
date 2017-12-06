@@ -1,29 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.zibuyuqing.ucbrowser.widget.root.UCRootView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/windowBg"
-    android:orientation="vertical"
-    android:id="@+id/ucRootView"
-    tools:context="com.zibuyuqing.ucbrowser.MainActivity">
+    android:layout_height="match_parent">
+    <com.zibuyuqing.ucbrowser.widget.root.UCRootView
+
+        android:id="@+id/ucRootView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/windowBg"
+        android:orientation="vertical"
+        tools:context="com.zibuyuqing.ucbrowser.MainActivity">
+
+        <include
+            android:id="@+id/llUCHeadLayout"
+            layout="@layout/layout_uc_head"></include>
+
+        <include
+            android:id="@+id/llUCNewsListLayout"
+            layout="@layout/layout_uc_news"></include>
+
+        <include
+            android:id="@+id/llTopSearchBar"
+            layout="@layout/layout_top_search_bar"
+            android:visibility="invisible"></include>
+
+        <include
+            android:id="@+id/llUCBottomBar"
+            layout="@layout/layout_uc_bottom_bar"></include>
+
+
+    </com.zibuyuqing.ucbrowser.widget.root.UCRootView>
+
     <include
-        android:id="@+id/llUCHeadLayout"
-        layout="@layout/layout_uc_head">
-    </include>
-    <include
-        android:id="@+id/llUCNewsListLayout"
-        layout="@layout/layout_uc_news"></include>
-    <include
-        android:visibility="invisible"
-        android:id="@+id/llTopSearchBar"
-        layout="@layout/layout_top_search_bar">
-    </include>
-    <include
-        android:id="@+id/llUCBottomBar"
-        layout="@layout/layout_uc_bottom_bar">
-    </include>
-</com.zibuyuqing.ucbrowser.widget.root.UCRootView>
+        layout="@layout/layout_uc_pagers_manager"
+        android:visibility="gone"></include>
+</FrameLayout>
 

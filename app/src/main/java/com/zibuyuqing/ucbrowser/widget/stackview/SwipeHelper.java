@@ -7,6 +7,7 @@ import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -146,7 +147,7 @@ public class SwipeHelper {
 
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = ev.getAction();
-
+        Log.e(TAG,"onInterceptTouchEvent ::action =:" + action);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mDragging = false;
@@ -256,6 +257,7 @@ public class SwipeHelper {
     }
 
     public boolean onTouchEvent(MotionEvent ev) {
+        Log.e(TAG,"onTouchEvent =:" + mDragging);
         if (!mDragging) {
             if (!onInterceptTouchEvent(ev)) {
                 return mCanCurrViewBeDimissed;

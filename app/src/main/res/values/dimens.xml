@@ -2,6 +2,8 @@
 <resources>
     <dimen name="dimen_36dp">36dp</dimen>
     <dimen name="dimen_48dp">48dp</dimen>
+    <dimen name="dimen_64dp">64dp</dimen>
+    <dimen name="dimen_72dp">72dp</dimen>
     <dimen name="dimen_96dp">96dp</dimen>
     <dimen name="bezier_layout_height">190dp</dimen>
     <dimen name="uc_head_layout_height">310dp</dimen>

@@ -33,15 +33,15 @@ public class UCPagerAdapter extends StackAdapter<Integer> {
     }
     class PagerViewHolder extends UCStackView.ViewHolder{
         ImageView ivPagePreview;
-        TextView tvPosition;
+       // TextView tvPosition;
         public PagerViewHolder(View view) {
             super(view);
             ivPagePreview = (ImageView) view.findViewById(R.id.ivPagePreview);
-            tvPosition = (TextView)view.findViewById(R.id.tvPagerUC);
+            //tvPosition = (TextView)view.findViewById(R.id.tvPagerUC);
         }
         public void bind(Integer data,int position){
             ivPagePreview.setImageResource(data);
-            tvPosition.setText(position +"");
+            //tvPosition.setText(position +"");
         }
     }
 }

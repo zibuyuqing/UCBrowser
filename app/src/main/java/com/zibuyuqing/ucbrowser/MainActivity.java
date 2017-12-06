@@ -1,13 +1,17 @@
 package com.zibuyuqing.ucbrowser;
 
+import android.os.Handler;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
+import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
 import com.zibuyuqing.ucbrowser.ui.fragment.NewsListFragment;
@@ -17,8 +21,10 @@ import com.zibuyuqing.ucbrowser.widget.layout.UCBottomBar;
 import com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
+import com.zibuyuqing.ucbrowser.widget.stackview.UCStackView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -31,7 +37,17 @@ public class MainActivity extends AppCompatActivity {
     private UCRootView mUCRootView;
     private ViewPager mNewsPager;
     private TabLayout mNewsTab;
-    private NewsPageAdapter mAdapter;
+    private NewsPageAdapter mNewsPageAdapter;
+    private FrameLayout mPagersManagerLayout;
+    private UCStackView mUCStackView;
+    private UCPagerAdapter mPagerAdapter;
+    public static Integer[] TEST_DATAS = new Integer[]{
+            R.drawable.test_uc_screen,
+            R.drawable.test_uc_screen,
+            R.drawable.test_uc_screen,
+            R.drawable.test_uc_screen,
+            R.drawable.test_uc_screen,
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        mUCBottomBar.findViewById(R.id.flWindowsNum).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showPagers();
+            }
+        });
+
         mBezierLayout = (BezierLayout)findViewById(R.id.llBezierLayout);
         mUCRootView = (UCRootView) findViewById(R.id.ucRootView);
         mUCRootView.attachScrollStateListener(mTopSearchBar);
@@ -96,9 +119,31 @@ public class MainActivity extends AppCompatActivity {
         );
         mNewsPager = (ViewPager) mUCNewsLayout.findViewById(R.id.vpUCNewsPager);
         mNewsTab = (TabLayout) mUCNewsLayout.findViewById(R.id.tlUCNewsTab);
+
+        mPagersManagerLayout = (FrameLayout) findViewById(R.id.flPagersManager);
+        mUCStackView = (UCStackView)findViewById(R.id.ucStackView);
+        mPagerAdapter = new UCPagerAdapter(this);
+
+        mPagersManagerLayout.findViewById(R.id.tvBack).
+                setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                hidePagers();
+            }
+        });
+        mUCStackView.setAdapter(mPagerAdapter);
+
         bindNewsPage();
     }
-
+    public void showPagers(){
+        mPagersManagerLayout.setVisibility(View.VISIBLE);
+        mPagerAdapter.updateData(Arrays.asList(TEST_DATAS));
+        getWindow().setStatusBarColor(getResources().getColor(R.color.pureBlack, null));
+    }
+    public void hidePagers(){
+        mPagersManagerLayout.setVisibility(View.GONE);
+        initWindow();
+    }
     private void bindNewsPage() {
         List<BaseNewsFragment> fragments = new ArrayList<>(Constants.NEWS_TITLE.length);
         for(String title : Constants.NEWS_TITLE){
@@ -108,8 +153,8 @@ public class MainActivity extends AppCompatActivity {
             fragment.setArguments(bundle);
             fragments.add(fragment);
         }
-        mAdapter = new NewsPageAdapter(getSupportFragmentManager(),fragments);
-        mNewsPager.setAdapter(mAdapter);
+        mNewsPageAdapter = new NewsPageAdapter(getSupportFragmentManager(),fragments);
+        mNewsPager.setAdapter(mNewsPageAdapter);
         mNewsTab.setupWithViewPager(mNewsPager);
     }
 
