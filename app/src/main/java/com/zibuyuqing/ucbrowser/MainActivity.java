@@ -97,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
         mUCBottomBar.findViewById(R.id.flWindowsNum).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if(mUCRootView.getMode() != UCRootView.NEWS_MODE)
                 showPagers();
             }
         });

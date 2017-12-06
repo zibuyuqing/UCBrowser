@@ -56,7 +56,6 @@ public class BezierLayout extends BaseLayout {
         mHeight = mRes.getDimensionPixelSize(R.dimen.bezier_layout_height);
         mEdgeHeight = mHeight;
         mThemeColor = mRes.getColor(R.color.themeBlue,null);
-        Log.e("-----","---------------");
         mControlPoint = new Point(0,mHeight);
         mPaint = new Paint();
         mPaint.setColor(mThemeColor);

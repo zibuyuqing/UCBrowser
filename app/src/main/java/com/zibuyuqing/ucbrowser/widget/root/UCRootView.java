@@ -160,6 +160,7 @@ public class UCRootView extends RelativeLayout {
     public boolean onTouchEvent(MotionEvent ev) {
         if (getChildCount() <= 0) return super.onTouchEvent(ev);
         acquireVelocityTrackerAndAddMovement(ev);
+        boolean attchToFinal = attachToFinal();
         final int action = ev.getAction();
         float y = ev.getY();
         float x = ev.getX();
@@ -173,19 +174,24 @@ public class UCRootView extends RelativeLayout {
                 if (mTouchState == TOUCH_STATE_SCROLLING) {
                     float deltaY = y - mLastMotionY;
                     float deltaX = x - mLastMotionX;
-                    mTotalMotionY += deltaY;
                     if(Math.abs(deltaY) >= 1.0f) {
-                        float rate = mTotalMotionY / mFinalDistance;
-                        onScroll(rate);
+                        if(!attchToFinal) {
+                            mTotalMotionY += deltaY;
+                            float rate = mTotalMotionY / mFinalDistance;
+                            onScroll(rate);
+                        } else {
+                            mTotalMotionY = - mFinalDistance;
+                            onScroll(-1.0f);
+                        }
                     }
                 } else {
                     determineScrollingStart(ev);
                 }
-                Log.i(TAG,"onTouchEvent :: ACTION_MOVE mTouchState =:" +mTouchState);
+                Log.i(TAG,"onTouchEvent :: ACTION_MOVE mTouchState =:" +mTouchState+"attachToFinal =:" + attachToFinal());
                 mLastMotionY = y;
                 mLastMotionX = x;
                 //
-                return attachToFinal();
+                return attchToFinal;
             }
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
