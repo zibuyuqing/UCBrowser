@@ -47,6 +47,11 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
         mScaleEnable = scaleEnable;
     }
 
+    /**
+     *
+     * @param from 起始位置
+     * @param to 最终位置
+     */
     public void initTranslationY(int from, int to){
         mFromPosition = from;
         mToPosition = to;
@@ -67,6 +72,12 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
     private float calculateScale(float rate){
         return mStartScale + mScale * rate;
     }
+
+    /**
+     *
+     * @param rate 滑动的相对比率
+     * @return
+     */
     private float calculateTransY(float rate){
         Log.e(TAG,"rate :: =;" + rate);
         return mFromPosition + mDistance * rate;

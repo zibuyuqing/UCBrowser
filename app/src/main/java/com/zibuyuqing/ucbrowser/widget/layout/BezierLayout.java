@@ -3,6 +3,7 @@ package com.zibuyuqing.ucbrowser.widget.layout;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
@@ -63,15 +64,7 @@ public class BezierLayout extends BaseLayout {
         mPaint.setStyle(Paint.Style.FILL);
     }
 
-    private void drawBg(Canvas canvas) {
-        mPath.reset();
-        mPath.moveTo(0,0);
-        mPath.lineTo(0,mEdgeHeight);
-        mPath.quadTo(mControlPoint.x,mControlPoint.y,mScreenWidth,mEdgeHeight);
-        mPath.lineTo(mScreenWidth,0);
-        mPath.lineTo(0,0);
-        canvas.drawPath(mPath,mPaint);
-    }
+
     @Override
     public void onTouch(float x, float y) {
         super.onTouch(x, y);
@@ -83,20 +76,34 @@ public class BezierLayout extends BaseLayout {
         if(!mStartScroll){
             return;
         }
+        // 获取 LayoutParams 根据滑动状态动态更新视图大小
         if(mLayoutParams == null){
             mLayoutParams = getLayoutParams();
         }
         if(rate >= 0) {
+
+            // 下拉
+
+            // FINAL_DISTANCE 为最大能滑动的距离
             int dis = (int) (FINAL_DISTANCE * rate);
+
+            // 左右边界更新速度是控制点的0.5倍
+
             mEdgeHeight = (int) (mHeight + dis * 0.5f);
+
+            //控制点更新
             mControlPoint.set(mControlPoint.x, mHeight + dis);
+
+            // 视图内容改变大小，位置和透明度
             mContain.setScaleX(1.0f - rate * 0.2f);
             mContain.setScaleY(1.0f - rate * 0.2f);
             mContain.setTranslationY(dis * 0.5f);
             mContain.setAlpha(1.0f - rate * 1.5f);
         } else {
+            // 上滑
             mControlPoint.set(0,mHeight);
         }
+        // 改变视图大小
         mLayoutParams.height = mControlPoint.y;
         setLayoutParams(mLayoutParams);
         requestLayout();
@@ -126,4 +133,21 @@ public class BezierLayout extends BaseLayout {
         super.dispatchDraw(canvas);
     }
 
+    private void drawBg(Canvas canvas) {
+        mPath.reset();
+        // 顶部开始
+        mPath.moveTo(0,0);
+        mPath.lineTo(0,mEdgeHeight);
+        // 贝塞尔曲线
+        mPath.quadTo(mControlPoint.x,mControlPoint.y,mScreenWidth,mEdgeHeight);
+        mPath.lineTo(mScreenWidth,0);
+        // 闭合
+        mPath.lineTo(0,0);
+        canvas.drawPath(mPath,mPaint);
+        Paint paint = new Paint(Color.RED);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawCircle(5,mEdgeHeight -5,10,paint);
+        canvas.drawCircle(mControlPoint.x,mControlPoint.y -10,10,paint);
+        canvas.drawCircle(mScreenWidth -5,mEdgeHeight - 5,10,paint);
+    }
 }

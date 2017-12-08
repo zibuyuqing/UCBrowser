@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:background="@color/themeBlue"
     android:padding="8dp"
-    android:layout_height="48dp">
+    android:layout_height="@dimen/dimen_48dp">
     <ImageView
         android:layout_gravity="center"
         android:src="@drawable/ic_searchbar_book"

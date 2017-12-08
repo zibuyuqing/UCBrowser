@@ -18,6 +18,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.OverScroller;
 
@@ -35,6 +36,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private static final String TAG = "UCStackView";
     private static final int INVALID_POINTER = -1;
     public static final int INVALID_POSITION = -1;
+    private static final int LAYOUT_ALL = 0;
+    private static final int LAYOUT_PRE_ACTIVE = -1;
+    public static final int LAYOUT_AFTER_ACTIVE = 1;
     public static final float PROGRESS_STEP = 0.2f;
     public static final float BASE_MAX_SCROLL_P = 0.72f;
     public static final float BASE_MIN_SCROLL_P = 0.34f;
@@ -64,6 +68,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private float mViewMaxAlpha;
     private float mMinScrollP;
     private float mMaxScrollP;
+    private float mMinPositiveScrollP;
+    private float mMaxPositiveScrollP;
     private float mScrollProgress;
     private final ViewDataObserver mObserver = new ViewDataObserver();
     private boolean mInterceptedBySwipeHelper;
@@ -78,8 +84,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     ObjectAnimator mScrollAnimator;
     private int mActivePager;
     boolean mIsFirstLayout = true;
-    boolean mRequireLayoutAllChildren = true;
-
+    private int mLayoutState = LAYOUT_ALL;
     public UCStackView(@NonNull Context context) {
         this(context, null);
     }
@@ -108,7 +113,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mViewMaxTop = mSreenHeight;
         mViewMinScale = DEFAULT_VIEW_MIN_SCALE;
         mViewMaxScale = DEFAULT_VIEW_MAX_SCALE;
-        mDuration = 200;
+        mDuration = 500;
         float densityScale = resources.getDisplayMetrics().density;
         mSwipeHelper = new SwipeHelper(mContext, SwipeHelper.X, this, densityScale, mTouchSlop);
         mSwipeHelper.setMinAlpha(1f);
@@ -148,11 +153,16 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             Rect rect = new Rect();
             child.getHitRect(rect);
             mChildTouchRect[i] = rect;
-
-            if(!mRequireLayoutAllChildren){
-                if(i >= mActivePager){
-                    continue;
-                }
+            switch (mLayoutState){
+                case LAYOUT_PRE_ACTIVE:
+                    if(i > mActivePager){
+                        continue;
+                    }
+                    break;
+                case LAYOUT_AFTER_ACTIVE:
+                    if(i < mActivePager){
+                        continue;
+                    }
             }
             progress = getScrollP();
             transY = calculateProgress2TransY(i,progress);
@@ -257,6 +267,15 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         return scale;
     }
 
+    /**
+     * 计算阻尼
+     * @return
+     */
+    private float calculateDamping(){
+        float damping = (1.0f - Math.abs(mScrollProgress - getPositiveScrollP()) * 4);
+        Log.e(TAG,"calculateDamping :: damping = :" + damping);
+        return damping;
+    }
     private float getScrollRate() {
         float topSpace = mViewMaxTop;
         return mTotalMotionY / topSpace;
@@ -268,6 +287,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private void updateScrollProgressRange(){
         mMinScrollP = BASE_MIN_SCROLL_P - (getChildCount() - 2) * PROGRESS_STEP;
         mMaxScrollP = BASE_MAX_SCROLL_P;
+        mMinPositiveScrollP = mMinScrollP + PROGRESS_STEP * 0.25f;
+        mMaxPositiveScrollP = mMaxScrollP - PROGRESS_STEP * 0.75f;
     }
     private void calculateInitialScrollP(){
         updateScrollProgressRange();
@@ -356,7 +377,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP: {
                 // Animate the doScroll back if we've cancelled
-                if (wasScrolling && mIsOverScroll) {
+                if (wasScrolling) {
                     scrollToPositivePosition();
                 }
                 // Reset the drag state and the velocity tracker
@@ -415,8 +436,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                     }
                 }
                 if (mIsScrolling) {
-                    if (mIsOverScroll) {
-                        mTotalMotionY -= deltaP * 0.3;
+                    if (isOverPositiveScrollP()) {
+                        mTotalMotionY -= deltaP *(calculateDamping());
                     } else {
                         mTotalMotionY -= deltaP;
                     }
@@ -433,9 +454,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 if (mIsScrolling && (Math.abs(velocity) > mMinimumVelocity)) {
                     fling(velocity);
                 } else {
-                    if (mIsOverScroll) {
-                        scrollToPositivePosition();
-                    }
+                    scrollToPositivePosition();
                 }
                 resetTouchState();
                 Log.e(TAG, "onTouchEvent :: mIsOverScroll =:" + mIsOverScroll);
@@ -455,9 +474,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 break;
             }
             case MotionEvent.ACTION_CANCEL: {
-                if (computeScrollProgress()) {
-                    scrollToPositivePosition();
-                }
+                scrollToPositivePosition();
                 resetTouchState();
                 break;
             }
@@ -490,14 +507,16 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
      * Returns the bounded stack scroll
      */
     float getPositiveScrollP() {
-        if (mScrollProgress < mMinScrollP) {
-            return mMinScrollP;
-        } else if(mScrollProgress > mMaxScrollP){
-            return mMaxScrollP;
+        if (mScrollProgress < mMinPositiveScrollP) {
+            return mMinPositiveScrollP;
+        } else if(mScrollProgress > mMaxPositiveScrollP){
+            return mMaxPositiveScrollP;
         }
         return mScrollProgress;
     }
-
+    boolean isOverPositiveScrollP(){
+        return (mScrollProgress > mMaxPositiveScrollP || mScrollProgress < mMinPositiveScrollP);
+    }
     void stopScroller() {
         if (!mScroller.isFinished()) {
             mScroller.abortAnimation();
@@ -517,7 +536,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         stopScroller();
         mScrollAnimator = ObjectAnimator.ofFloat(this, "scrollP", curScroll, newScroll);
         mScrollAnimator.setDuration(mDuration);
-        mScrollAnimator.setInterpolator(new LinearOutSlowInInterpolator());
+        mScrollAnimator.setInterpolator(new DecelerateInterpolator());
         mScrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
@@ -537,16 +556,18 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     }
 
     private void scrollToPositivePosition() {
-
         Log.e(TAG, "scrollToPositivePosition mScrollProgress =:" + mScrollProgress);
         float curScroll = getScrollP();
-        animateScroll(curScroll, getPositiveScrollP(), new Runnable() {
-            @Override
-            public void run() {
-                resetTouchState();
-            }
-        });
-        invalidate();
+        float positiveScrollP = getPositiveScrollP();
+        if(Float.compare(curScroll,positiveScrollP) != 0) {
+            animateScroll(curScroll, getPositiveScrollP(), new Runnable() {
+                @Override
+                public void run() {
+                    resetTouchState();
+                }
+            });
+            invalidate();
+        }
     }
 
     private void doScroll() {
@@ -565,9 +586,12 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         Log.e(TAG, "computeScroll :: mIsOverScroll :" + mIsOverScroll);
         if (mScroller.computeScrollOffset()) {
             Log.e(TAG, "computeScroll :111: mIsOverScroll :" + mIsOverScroll);
-            if (mIsOverScroll) {
+            if(mIsOverScroll){
                 scrollToPositivePosition();
             } else {
+                if(mScroller.isFinished()){
+                    scrollToPositivePosition();
+                }
                 mTotalMotionY = mScroller.getCurrY();
                 doScroll();
             }
@@ -631,17 +655,24 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     @Override
     public void onChildDismissed(final View v) {
         final float curProgress = getScrollP();
-        float newProgress = mActivePager == 0 ? curProgress  - PROGRESS_STEP:curProgress  + PROGRESS_STEP;
-        mRequireLayoutAllChildren = mActivePager == 0 ? true : false;
-        Log.e(TAG,"(mActivePager - getChildCount() + 2) * PROGRESS_STEP =:" +(mActivePager - getChildCount() + 2) * PROGRESS_STEP);
+        float newProgress = curProgress  + PROGRESS_STEP;
+        mLayoutState = LAYOUT_PRE_ACTIVE;
+        if(newProgress > mMaxPositiveScrollP){
+            newProgress = curProgress  - PROGRESS_STEP;
+            mLayoutState = LAYOUT_AFTER_ACTIVE;
+        } else if(newProgress < mMinPositiveScrollP){
+            newProgress = curProgress  + PROGRESS_STEP;
+            mLayoutState = LAYOUT_PRE_ACTIVE;
+        }
+
         animateScroll(curProgress, newProgress, new Runnable() {
             @Override
             public void run() {
                 removeView(v);
-                if(mRequireLayoutAllChildren) {
+                if(mLayoutState == LAYOUT_AFTER_ACTIVE) {
                     setScrollP(curProgress);
                 }
-                mRequireLayoutAllChildren = true;
+                mLayoutState = LAYOUT_ALL;
                 updateScrollProgressRange();
                 mSelectPosition --;
                 mActivePager = INVALID_POSITION;

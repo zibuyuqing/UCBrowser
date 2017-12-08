@@ -62,12 +62,17 @@ public class MainActivity extends AppCompatActivity {
         mUCHeadLayout.initTranslationY(0, -100);
 
         mTopSearchBar = (BaseLayout) findViewById(R.id.llTopSearchBar);
+
+        //可移动
         mTopSearchBar.setTranslateEnable(true);
+
+        // 这方法是在view layout 之后获取大小，避免获取的大小全是 0
         mTopSearchBar.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
                         mTopSearchBar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        // 初始化移动参数
                         mTopSearchBar.initTranslationY(-mTopSearchBar.getHeight(), 0);
                     }
                 }

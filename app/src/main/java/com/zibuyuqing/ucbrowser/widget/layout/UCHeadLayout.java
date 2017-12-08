@@ -54,6 +54,7 @@ public class UCHeadLayout extends BaseLayout {
 
     @Override
     public void onStartScroll() {
+        // mUCCoverLayout 为下拉时所看到的提示“上滑进入UC头条”的布局
         mUCCoverLayout.setVisibility(VISIBLE);
         mUCCoverLayout.setAlpha(0.f);
         super.onStartScroll();
@@ -67,12 +68,22 @@ public class UCHeadLayout extends BaseLayout {
     @Override
     public void onScroll(float rate) {
         if(rate > 0) {
+            // 下拉
+
+            // 显示提示语并下移
             mCoverTip.setTranslationY(100 * Math.abs(rate));
+            // 提示布局逐渐显现
             mUCCoverLayout.setAlpha(rate * 1.5f);
         } else {
+            // 上滑
+
+            // 隐藏提示布局
             mUCCoverLayout.setVisibility(GONE);
+            // foreground 逐渐显现，布局变黑
             mForeground.setAlpha((int) (ALPHA_255 * Math.abs(rate)));
             float adjustRate = 1.0f + rate * 0.05f;
+
+            // 布局内容逐渐变小
             mCategoryContain.setScaleX(adjustRate);
             mCategoryContain.setScaleY(adjustRate);
             mWebsiteContain.setScaleX(adjustRate);

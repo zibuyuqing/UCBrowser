@@ -60,23 +60,29 @@ public class UCBottomBar extends BaseLayout {
 
     @Override
     public void onScroll(float rate) {
-        Log.e(TAG,"onScroll :: rate =:" + rate);
+        Log.i(TAG,"onScroll :: rate =:" + rate);
         if(rate > 0){
             return;
         }
+        //第1,2,4个按钮渐隐
         ivForward.setAlpha(calculateBtnAlpha(rate));
         ivBack.setAlpha(calculateBtnAlpha(rate));
         flWindowNum.setAlpha(calculateBtnAlpha(rate));
+        // 第三个按钮移动到第四个位置
         ivMenu.setTranslationX(calculateMenuBtnTransX(rate));
-        tvSubscribe.setTranslationY(calculateNewsBtnTranY(mHalfHeight,rate,1.0f));
-        tvVideo.setTranslationY(calculateNewsBtnTranY(mHalfHeight,rate,1.5f));
-        tvHeadline.setTranslationY(calculateNewsBtnTranY(mHalfHeight ,rate,2.0f));
+
+        // 新闻按钮依次上升出现
+        tvSubscribe.setTranslationY(calculateNewsBtnTransY(mHalfHeight,rate,1.0f));
+        tvVideo.setTranslationY(calculateNewsBtnTransY(mHalfHeight,rate,1.5f));
+        tvHeadline.setTranslationY(calculateNewsBtnTransY(mHalfHeight ,rate,2.0f));
     }
     private float calculateMenuBtnTransX(float rate){
         float dis = mScreenWidth / 5;
         return - dis * rate;
     }
-    private float calculateNewsBtnTranY(int finalY,float rate,float velocity){
+    private float calculateNewsBtnTransY(int finalY, float rate, float velocity){
+
+        // velocity 是调整速率
         float adjustRate = rate * velocity;
         rate = adjustRate < -1.0f ? -1.0f : adjustRate;
         return 0 + finalY * rate;
