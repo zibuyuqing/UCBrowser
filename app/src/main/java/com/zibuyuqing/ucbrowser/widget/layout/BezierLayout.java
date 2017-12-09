@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
+import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 
 /**
  * Created by Xijun.Wang on 2017/11/28.
@@ -29,7 +30,7 @@ public class BezierLayout extends BaseLayout {
     private Path mPath = new Path();
     private int mHeight;
     private int mEdgeHeight;
-    private boolean mStartScroll = false;
+    private int mMinHeight;
     private ViewGroup.LayoutParams mLayoutParams;
     private View mContain;
     public BezierLayout(Context context) {
@@ -73,47 +74,48 @@ public class BezierLayout extends BaseLayout {
 
     @Override
     public void onScroll(float rate) {
-        if(!mStartScroll){
-            return;
-        }
         // 获取 LayoutParams 根据滑动状态动态更新视图大小
         if(mLayoutParams == null){
             mLayoutParams = getLayoutParams();
         }
-        if(rate >= 0) {
+        if(mDirection == UCRootView.SCROLL_HORIZONTALLY){
 
-            // 下拉
+        } else if(mDirection == UCRootView.SCROLL_VERTICALLY) {
 
-            // FINAL_DISTANCE 为最大能滑动的距离
-            int dis = (int) (FINAL_DISTANCE * rate);
+            if (rate >= 0) {
 
-            // 左右边界更新速度是控制点的0.5倍
+                // 下拉
 
-            mEdgeHeight = (int) (mHeight + dis * 0.5f);
+                // FINAL_DISTANCE 为最大能滑动的距离
+                int dis = (int) (FINAL_DISTANCE * rate);
 
-            //控制点更新
-            mControlPoint.set(mControlPoint.x, mHeight + dis);
+                // 左右边界更新速度是控制点的0.5倍
 
-            // 视图内容改变大小，位置和透明度
-            mContain.setScaleX(1.0f - rate * 0.2f);
-            mContain.setScaleY(1.0f - rate * 0.2f);
-            mContain.setTranslationY(dis * 0.5f);
-            mContain.setAlpha(1.0f - rate * 1.5f);
-        } else {
-            // 上滑
-            mControlPoint.set(0,mHeight);
+                mEdgeHeight = (int) (mHeight + dis * 0.5f);
+
+                //控制点更新
+                mControlPoint.set(mControlPoint.x, mHeight + dis);
+
+                // 视图内容改变大小，位置和透明度
+                mContain.setScaleX(1.0f - rate * 0.2f);
+                mContain.setScaleY(1.0f - rate * 0.2f);
+                mContain.setTranslationY(dis * 0.5f);
+                mContain.setAlpha(1.0f - rate * 1.5f);
+            } else {
+                // 上滑
+                mControlPoint.set(0, mHeight);
+            }
+            // 改变视图大小
+            mLayoutParams.height = mControlPoint.y;
         }
-        // 改变视图大小
-        mLayoutParams.height = mControlPoint.y;
         setLayoutParams(mLayoutParams);
         requestLayout();
-        super.onScroll(rate);
     }
 
     @Override
-    public void onStartScroll() {
+    public void onStartScroll(int direction) {
         mStartScroll = true;
-        super.onStartScroll();
+        super.onStartScroll(direction);
     }
 
     @Override
@@ -146,8 +148,5 @@ public class BezierLayout extends BaseLayout {
         canvas.drawPath(mPath,mPaint);
         Paint paint = new Paint(Color.RED);
         paint.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(5,mEdgeHeight -5,10,paint);
-        canvas.drawCircle(mControlPoint.x,mControlPoint.y -10,10,paint);
-        canvas.drawCircle(mScreenWidth -5,mEdgeHeight - 5,10,paint);
     }
 }

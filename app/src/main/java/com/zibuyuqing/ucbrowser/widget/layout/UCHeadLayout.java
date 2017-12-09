@@ -3,10 +3,12 @@ package com.zibuyuqing.ucbrowser.widget.layout;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
+import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 
 /**
  * Created by Xijun.Wang on 2017/11/28.
@@ -19,6 +21,7 @@ public class UCHeadLayout extends BaseLayout {
     private View mUCCoverLayout;
     private View mCategoryContain;
     private View mWebsiteContain;
+    private View mWebsiteLayout;
     public UCHeadLayout(Context context) {
         this(context,null);
     }
@@ -38,6 +41,7 @@ public class UCHeadLayout extends BaseLayout {
         mCoverTip = mUCCoverLayout.findViewById(R.id.ucCoverTip);
         mCategoryContain = findViewById(R.id.llBezierContain);
         mWebsiteContain = findViewById(R.id.llUCHeadWebsiteContain);
+        mWebsiteLayout = findViewById(R.id.llUCWebsiteLayout);
     }
 
     @Override
@@ -53,11 +57,12 @@ public class UCHeadLayout extends BaseLayout {
     }
 
     @Override
-    public void onStartScroll() {
+    public void onStartScroll(int direction) {
+        super.onStartScroll(direction);
         // mUCCoverLayout 为下拉时所看到的提示“上滑进入UC头条”的布局
         mUCCoverLayout.setVisibility(VISIBLE);
         mUCCoverLayout.setAlpha(0.f);
-        super.onStartScroll();
+
     }
 
     @Override
@@ -67,29 +72,38 @@ public class UCHeadLayout extends BaseLayout {
 
     @Override
     public void onScroll(float rate) {
-        if(rate > 0) {
-            // 下拉
+        Log.e("wanngx","onScroll ::" + mStartScroll);
+        if(mDirection == UCRootView.SCROLL_HORIZONTALLY){
+            if(rate > 0){
+                return;
+            }
+            mWebsiteLayout.setTranslationX(calculateTransX(rate));
+            mCategoryContain.setAlpha(1.0f - Math.abs(rate));
 
-            // 显示提示语并下移
-            mCoverTip.setTranslationY(100 * Math.abs(rate));
-            // 提示布局逐渐显现
-            mUCCoverLayout.setAlpha(rate * 1.5f);
-        } else {
-            // 上滑
+        } else if(mDirection == UCRootView.SCROLL_VERTICALLY) {
+            if (rate > 0) {
+                // 下拉
+                mUCCoverLayout.setVisibility(VISIBLE);
+                // 显示提示语并下移
+                mCoverTip.setTranslationY(100 * Math.abs(rate));
+                // 提示布局逐渐显现
+                mUCCoverLayout.setAlpha(rate * 1.5f);
+            } else {
+                // 上滑
 
-            // 隐藏提示布局
-            mUCCoverLayout.setVisibility(GONE);
-            // foreground 逐渐显现，布局变黑
-            mForeground.setAlpha((int) (ALPHA_255 * Math.abs(rate)));
-            float adjustRate = 1.0f + rate * 0.05f;
+                // 隐藏提示布局
+                mUCCoverLayout.setVisibility(GONE);
+                // foreground 逐渐显现，布局变黑
+                mForeground.setAlpha((int) (ALPHA_255 * Math.abs(rate)));
+                float adjustRate = 1.0f + rate * 0.05f;
 
-            // 布局内容逐渐变小
-            mCategoryContain.setScaleX(adjustRate);
-            mCategoryContain.setScaleY(adjustRate);
-            mWebsiteContain.setScaleX(adjustRate);
-            mWebsiteContain.setScaleY(adjustRate);
+                // 布局内容逐渐变小
+                mCategoryContain.setScaleX(adjustRate);
+                mCategoryContain.setScaleY(adjustRate);
+                mWebsiteContain.setScaleX(adjustRate);
+                mWebsiteContain.setScaleY(adjustRate);
+            }
         }
-        super.onScroll(rate);
     }
 
 }

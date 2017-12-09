@@ -9,9 +9,9 @@
     android:layout_marginTop="8dp"
     android:layout_height="42dp">
     <ImageView
-
         android:layout_alignParentStart="true"
         android:src ="@drawable/ic_search"
+        android:padding="2dp"
         style="@style/SearchBoxImageIconStyle"/>
     <ImageView
         android:id="@+id/ivScan"

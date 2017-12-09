@@ -1,6 +1,5 @@
 package com.zibuyuqing.ucbrowser;
 
-import android.os.Handler;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -8,7 +7,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
@@ -16,6 +14,7 @@ import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
 import com.zibuyuqing.ucbrowser.ui.fragment.NewsListFragment;
 import com.zibuyuqing.ucbrowser.utils.Constants;
+import com.zibuyuqing.ucbrowser.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.widget.layout.BezierLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCBottomBar;
 import com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout;
@@ -58,13 +57,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void initViews() {
         mUCHeadLayout = (UCHeadLayout) findViewById(R.id.llUCHeadLayout);
-        mUCHeadLayout.setTranslateEnable(true);
+        mUCHeadLayout.setTransYEnable(true);
+        mUCHeadLayout.setTransXEnable(true);
         mUCHeadLayout.initTranslationY(0, -100);
-
+        mUCHeadLayout.initTranslationX(0, -ViewUtil.getScreenSize(this).x);
         mTopSearchBar = (BaseLayout) findViewById(R.id.llTopSearchBar);
 
         //可移动
-        mTopSearchBar.setTranslateEnable(true);
+        mTopSearchBar.setTransYEnable(true);
 
         // 这方法是在view layout 之后获取大小，避免获取的大小全是 0
         mTopSearchBar.getViewTreeObserver().addOnGlobalLayoutListener(
@@ -79,7 +79,9 @@ public class MainActivity extends AppCompatActivity {
         );
 
         mUCNewsLayout = (UCNewsLayout) findViewById(R.id.llUCNewsListLayout);
-        mUCNewsLayout.setTranslateEnable(true);
+        mUCNewsLayout.setTransYEnable(true);
+        mUCNewsLayout.setTransXEnable(true);
+        mUCNewsLayout.initTranslationX(0, -ViewUtil.getScreenSize(this).x);
         mUCNewsLayout.getViewTreeObserver().addOnGlobalLayoutListener(
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
@@ -96,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
                     mUCRootView.back2Normal();
+                } else {
+                    mUCRootView.back2Home();
                 }
             }
         });
@@ -119,7 +123,10 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onGlobalLayout() {
                         mUCNewsLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        mUCRootView.setFinalDistance(mUCHeadLayout.getMeasuredHeight());
+                        mUCRootView.setFinalDistance(
+                                ViewUtil.getScreenSize(MainActivity.this).x,
+                                mUCHeadLayout.getMeasuredHeight()
+                        );
                     }
                 }
         );
@@ -141,6 +148,16 @@ public class MainActivity extends AppCompatActivity {
 
         bindNewsPage();
     }
+
+    @Override
+    public void onBackPressed() {
+        if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
+            mUCRootView.back2Normal();
+        } else if(mUCRootView.getMode() == UCRootView.WEBSITE_MODE){
+            mUCRootView.back2Home();
+        }
+    }
+
     public void showPagers(){
         mPagersManagerLayout.setVisibility(View.VISIBLE);
         mPagerAdapter.updateData(Arrays.asList(TEST_DATAS));

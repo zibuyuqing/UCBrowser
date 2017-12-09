@@ -18,10 +18,13 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.OverScroller;
 
+import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
 
 import java.util.ArrayList;
@@ -85,6 +88,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private int mActivePager;
     boolean mIsFirstLayout = true;
     private int mLayoutState = LAYOUT_ALL;
+    private Interpolator mLinearOutSlowInInterpolator;
+
     public UCStackView(@NonNull Context context) {
         this(context, null);
     }
@@ -102,6 +107,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private void init() {
         mViewHolders = new ArrayList<ViewHolder>();
         mScroller = new OverScroller(mContext);
+        mScroller.setFriction(0.02f);
         ViewConfiguration configuration = ViewConfiguration.get(mContext);
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
@@ -117,6 +123,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         float densityScale = resources.getDisplayMetrics().density;
         mSwipeHelper = new SwipeHelper(mContext, SwipeHelper.X, this, densityScale, mTouchSlop);
         mSwipeHelper.setMinAlpha(1f);
+        mLinearOutSlowInInterpolator = AnimationUtils.loadInterpolator(mContext, R.anim.linear_out_show_in);
     }
 
     @Override
@@ -272,7 +279,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
      * @return
      */
     private float calculateDamping(){
-        float damping = (1.0f - Math.abs(mScrollProgress - getPositiveScrollP()) * 4);
+        float damping = (1.0f - Math.abs(mScrollProgress - getPositiveScrollP()) * 5);
         Log.e(TAG,"calculateDamping :: damping = :" + damping);
         return damping;
     }
@@ -504,7 +511,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     }
 
     /**
-     * Returns the bounded stack scroll
+     * Returns the stack scroll progress
      */
     float getPositiveScrollP() {
         if (mScrollProgress < mMinPositiveScrollP) {
@@ -536,7 +543,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         stopScroller();
         mScrollAnimator = ObjectAnimator.ofFloat(this, "scrollP", curScroll, newScroll);
         mScrollAnimator.setDuration(mDuration);
-        mScrollAnimator.setInterpolator(new DecelerateInterpolator());
+        mScrollAnimator.setInterpolator(mLinearOutSlowInInterpolator);
         mScrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {

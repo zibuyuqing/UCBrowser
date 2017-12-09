@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
-    android:layout_marginTop="16dp"
-    android:layout_height="48dp">
+    android:paddingTop="16dp"
+    android:layout_height="64dp">
     <TextView
         android:textColor="@color/windowBg"
         android:layout_centerVertical="true"
