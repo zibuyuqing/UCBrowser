@@ -356,13 +356,11 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 mVelocityTracker.addMovement(ev);
 
                 int activePointerIndex = ev.findPointerIndex(mActivePointerId);
-                /// M: [ALPS01903572] handle multi-touch exception @{
                 if (activePointerIndex < 0) {
                     Log.d(TAG, "findPointerIndex failed");
                     mActivePointerId = INVALID_POINTER;
                     break;
                 }
-                /// M: [ALPS01903572] handle multi-touch exception @}
                 int y = (int) ev.getY(activePointerIndex);
                 int x = (int) ev.getX(activePointerIndex);
                 if (Math.abs(y - mInitialMotionY) > mTouchSlop) {

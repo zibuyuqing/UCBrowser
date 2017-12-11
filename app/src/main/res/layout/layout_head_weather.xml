@@ -5,6 +5,7 @@
     android:layout_marginLeft="16dp"
     android:layout_marginRight="16dp"
     android:paddingTop="16dp"
+    android:id="@+id/rlUCWeather"
     android:layout_height="64dp">
     <TextView
         android:textColor="@color/windowBg"

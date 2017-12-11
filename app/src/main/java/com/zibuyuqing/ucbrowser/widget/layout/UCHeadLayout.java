@@ -78,7 +78,6 @@ public class UCHeadLayout extends BaseLayout {
                 return;
             }
             mWebsiteLayout.setTranslationX(calculateTransX(rate));
-            mCategoryContain.setAlpha(1.0f - Math.abs(rate));
 
         } else if(mDirection == UCRootView.SCROLL_VERTICALLY) {
             if (rate > 0) {

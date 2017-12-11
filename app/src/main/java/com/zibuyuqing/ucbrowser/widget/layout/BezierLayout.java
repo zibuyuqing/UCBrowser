@@ -1,7 +1,6 @@
 package com.zibuyuqing.ucbrowser.widget.layout;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -11,10 +10,12 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
+import com.zibuyuqing.ucbrowser.widget.drawable.AlphaDrawable;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 
 /**
@@ -28,11 +29,13 @@ public class BezierLayout extends BaseLayout {
     private Point mControlPoint;
     private int mScreenWidth;
     private Path mPath = new Path();
-    private int mHeight;
+    private int mHeight,mWeatherLayoutHeight, mCategoryLayoutHeight,mSearchboxMarginLeft;
     private int mEdgeHeight;
     private int mMinHeight;
     private ViewGroup.LayoutParams mLayoutParams;
     private View mContain;
+    private View mWeather,mSearchbox,mCategory;
+    private AlphaDrawable mSearchboxBg;
     public BezierLayout(Context context) {
         this(context,null);
     }
@@ -49,6 +52,12 @@ public class BezierLayout extends BaseLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
         mContain = findViewById(R.id.llBezierContain);
+        mWeather = findViewById(R.id.rlUCWeather);
+        mSearchbox = findViewById(R.id.rlUCSearchbox);
+        mSearchboxBg = new AlphaDrawable(
+                mRes.getDrawable(R.drawable.search_box_bg,null));
+        mSearchbox.setBackground(mSearchboxBg);
+        mCategory = findViewById(R.id.llUCCategory);
     }
 
     @Override
@@ -56,6 +65,9 @@ public class BezierLayout extends BaseLayout {
         super.init();
         mScreenWidth = ViewUtil.getScreenSize(mContext).x;
         mHeight = mRes.getDimensionPixelSize(R.dimen.bezier_layout_height);
+        mWeatherLayoutHeight = mRes.getDimensionPixelSize(R.dimen.dimen_64dp);
+        mCategoryLayoutHeight = mRes.getDimensionPixelSize(R.dimen.dimen_72dp);
+        mSearchboxMarginLeft = mRes.getDimensionPixelSize(R.dimen.dimen_16dp);
         mEdgeHeight = mHeight;
         mThemeColor = mRes.getColor(R.color.themeBlue,null);
         mControlPoint = new Point(0,mHeight);
@@ -79,7 +91,19 @@ public class BezierLayout extends BaseLayout {
             mLayoutParams = getLayoutParams();
         }
         if(mDirection == UCRootView.SCROLL_HORIZONTALLY){
-
+            mContain.setTranslationY(mWeatherLayoutHeight * rate);
+            mSearchboxBg.setAlpha((int) (255 * (1 + rate)));
+            int dis = (int) ((mCategoryLayoutHeight + mWeatherLayoutHeight )* rate);
+            mEdgeHeight = mHeight + dis;
+            mControlPoint.set(mControlPoint.x, mHeight + dis);
+            LinearLayout.LayoutParams layoutParams =
+                    (LinearLayout.LayoutParams) mSearchbox.getLayoutParams();
+            if(layoutParams != null){
+                layoutParams.rightMargin = layoutParams.leftMargin =
+                        (int) (mSearchboxMarginLeft * (1 + rate));
+                mSearchbox.setLayoutParams(layoutParams);
+            }
+            mCategory.setAlpha(1 + 1.25f * rate);
         } else if(mDirection == UCRootView.SCROLL_VERTICALLY) {
 
             if (rate >= 0) {
@@ -105,9 +129,9 @@ public class BezierLayout extends BaseLayout {
                 // 上滑
                 mControlPoint.set(0, mHeight);
             }
-            // 改变视图大小
             mLayoutParams.height = mControlPoint.y;
         }
+        // 改变视图大小
         setLayoutParams(mLayoutParams);
         requestLayout();
     }
