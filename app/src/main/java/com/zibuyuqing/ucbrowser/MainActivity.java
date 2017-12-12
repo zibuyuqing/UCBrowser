@@ -155,6 +155,8 @@ public class MainActivity extends AppCompatActivity {
             mUCRootView.back2Normal();
         } else if(mUCRootView.getMode() == UCRootView.WEBSITE_MODE){
             mUCRootView.back2Home();
+        } else {
+            super.onBackPressed();
         }
     }
 

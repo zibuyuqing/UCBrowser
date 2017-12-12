@@ -129,7 +129,7 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
 
     @Override
     public void onScroll(float rate) {
-        if (!mStartScroll || rate > 0) {
+        if (!mStartScroll || rate > 0 || rate < -1) {
             return;
         }
         Log.e(TAG, "onScroll rate =:" + rate);
@@ -155,7 +155,7 @@ public class BaseLayout extends LinearLayout implements UCRootView.ScrollStateLi
 
 
     @Override
-    public void onTouch(float x, float y) {
+    public void move(float x, float y) {
 
     }
 }

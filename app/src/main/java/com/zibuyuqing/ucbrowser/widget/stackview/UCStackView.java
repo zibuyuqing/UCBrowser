@@ -10,7 +10,6 @@ import android.database.Observable;
 import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.view.animation.LinearOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -19,7 +18,6 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.OverScroller;
@@ -62,7 +60,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private Context mContext;
     private Rect mChildTouchRect[];
     private int mScreenWidth;
-    private int mSreenHeight;
+    private int mScreenHeight;
     private float mViewMinTop;
     private float mViewMaxTop;
     private float mViewMinScale;
@@ -114,9 +112,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mTouchSlop = configuration.getScaledTouchSlop();
         Resources resources = mContext.getResources();
         mScreenWidth = ViewUtil.getScreenSize(mContext).x;
-        mSreenHeight = ViewUtil.getScreenSize(mContext).y;
+        mScreenHeight = ViewUtil.getScreenSize(mContext).y;
         mViewMinTop = 0;
-        mViewMaxTop = mSreenHeight;
+        mViewMaxTop = mScreenHeight;
         mViewMinScale = DEFAULT_VIEW_MIN_SCALE;
         mViewMaxScale = DEFAULT_VIEW_MAX_SCALE;
         mDuration = 500;
@@ -337,7 +335,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 (mScrollAnimator != null && mScrollAnimator.isRunning());
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
-                // Save the touch down info
+                // Save the move down info
                 mInitialMotionX = mLastMotionX = (int) ev.getX();
                 mInitialMotionY = mLastMotionY = (int) ev.getY();
                 mActivePointerId = ev.getPointerId(0);
@@ -364,7 +362,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 int y = (int) ev.getY(activePointerIndex);
                 int x = (int) ev.getX(activePointerIndex);
                 if (Math.abs(y - mInitialMotionY) > mTouchSlop) {
-                    // Save the touch move info
+                    // Save the move move info
                     mIsScrolling = true;
                 }
 
@@ -375,7 +373,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             case MotionEvent.ACTION_POINTER_UP: {
                 int pointerIndex = ev.getActionIndex();
                 int pointerId = ev.getPointerId(pointerIndex);
-                Log.d(TAG, "Ignore multi-touch "
+                Log.d(TAG, "Ignore multi-move "
                         + pointerIndex + "(" + pointerId + ")");
                 break;
             }
@@ -406,7 +404,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         initVelocityTrackerIfNotExists();
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
-                // Save the touch down info
+                // Save the move down info
                 mInitialMotionX = mLastMotionX = (int) ev.getX();
                 mInitialMotionY = mLastMotionY = (int) ev.getY();
                 mActivePointerId = ev.getPointerId(0);
@@ -415,7 +413,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 // Initialize the velocity tracker
                 initOrResetVelocityTracker();
                 mVelocityTracker.addMovement(ev);
-                // Disallow parents from intercepting touch events
+                // Disallow parents from intercepting move events
                 break;
             }
             case MotionEvent.ACTION_POINTER_DOWN: {

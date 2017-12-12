@@ -79,14 +79,18 @@ public class BezierLayout extends BaseLayout {
 
 
     @Override
-    public void onTouch(float x, float y) {
-        super.onTouch(x, y);
-        touch(x,y);
+    public void move(float x, float y) {
+        super.move(x, y);
+        mControlPoint.set((int) x, mControlPoint.y);
+        invalidate();
     }
 
     @Override
     public void onScroll(float rate) {
         // 获取 LayoutParams 根据滑动状态动态更新视图大小
+        if(rate < -1){
+            return;
+        }
         if(mLayoutParams == null){
             mLayoutParams = getLayoutParams();
         }
@@ -127,6 +131,7 @@ public class BezierLayout extends BaseLayout {
                 mContain.setAlpha(1.0f - rate * 1.5f);
             } else {
                 // 上滑
+                mContain.setTranslationY(0);
                 mControlPoint.set(0, mHeight);
             }
             mLayoutParams.height = mControlPoint.y;
@@ -146,11 +151,6 @@ public class BezierLayout extends BaseLayout {
     public void onEndScroll() {
         mStartScroll = false;
         super.onEndScroll();
-    }
-
-    public void touch(float x, float y) {
-        mControlPoint.set((int) x, mControlPoint.y);
-        invalidate();
     }
 
     @Override
