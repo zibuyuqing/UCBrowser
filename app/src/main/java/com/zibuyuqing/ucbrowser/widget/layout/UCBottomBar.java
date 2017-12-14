@@ -62,8 +62,7 @@ public class UCBottomBar extends BaseLayout {
     @Override
     public void onScroll(float rate) {
         Log.i(TAG,"onScroll :: rate =:" + rate);
-        super.onScroll(rate);
-        if(mDirection == UCRootView.SCROLL_HORIZONTALLY){
+        if(mDirection == UCRootView.SCROLL_HORIZONTALLY || rate > 0){
             return;
         }
         //第1,2,4个按钮渐隐

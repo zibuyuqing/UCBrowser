@@ -21,6 +21,7 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.OverScroller;
+import android.widget.Toast;
 
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
@@ -43,11 +44,11 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     public static final float PROGRESS_STEP = 0.2f;
     public static final float BASE_MAX_SCROLL_P = 0.72f;
     public static final float BASE_MIN_SCROLL_P = 0.34f;
-    public static final float PROGRESS_START = 0.6f;
+    public static final float PROGRESS_START = 0.8f;
     public static final float DEFAULT_VIEW_MAX_SCALE = 0.9f;
     public static final float DEFAULT_VIEW_MIN_SCALE = 0.7f;
     private StackAdapter mStackAdapter;
-    private int mSelectPosition = 4;
+    private int mSelectPager = 0;
     private List<ViewHolder> mViewHolders;
     private int mDuration;
     private OverScroller mScroller;
@@ -179,7 +180,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         }
         invalidate();
     }
-
     public void setAdapter(StackAdapter adapter) {
         mStackAdapter = adapter;
         mStackAdapter.registerObserver(mObserver);
@@ -232,6 +232,13 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         view.setTranslationZ(transZ);
     }
 
+    public void selectPager(int key){
+        mSelectPager = key;
+        Toast.makeText(mContext, "点击第" + mSelectPager +" 项", Toast.LENGTH_SHORT).show();
+    }
+    public void closePager(int key){
+        Toast.makeText(mContext, "关闭了第" + mSelectPager +" 项", Toast.LENGTH_SHORT).show();
+    }
     private void scaleView(float scale, View view) {
         view.setScaleX(scale);
         view.setScaleY(scale);
@@ -285,7 +292,21 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         float topSpace = mViewMaxTop;
         return mTotalMotionY / topSpace;
     }
+    public void animateShow(int selectPager){
+        mSelectPager = selectPager;
+        Log.e(TAG,"animateShow :: selectPager =:" + selectPager);
+        ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(this,"alpha",0,1);
+        alphaAnimator.setDuration(500);
+        calculateInitialScrollP();
+        layoutChildren();
+        alphaAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
 
+            }
+        });
+        alphaAnimator.start();
+    }
     private float calculateViewProgress(int index,float progress) {
         return PROGRESS_STEP * index + progress;
     }
@@ -294,10 +315,12 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mMaxScrollP = BASE_MAX_SCROLL_P;
         mMinPositiveScrollP = mMinScrollP + PROGRESS_STEP * 0.25f;
         mMaxPositiveScrollP = mMaxScrollP - PROGRESS_STEP * 0.75f;
+        Log.e(TAG,"updateScrollProgressRange ::mMinScrollP =:" + mMinScrollP +",mMaxScrollP =:" + mMaxScrollP);
     }
     private void calculateInitialScrollP(){
+        Log.e(TAG,"calculateInitialScrollP:: ");
         updateScrollProgressRange();
-        mScrollProgress = PROGRESS_START - mSelectPosition * PROGRESS_STEP;
+        mScrollProgress = PROGRESS_START - mSelectPager * PROGRESS_STEP;
         mTotalMotionY = mScrollProgress * mViewMaxTop;
     }
     private float calculateProgress2Y(float progress) {
@@ -677,7 +700,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 }
                 mLayoutState = LAYOUT_ALL;
                 updateScrollProgressRange();
-                mSelectPosition --;
                 mActivePager = INVALID_POSITION;
             }
         });

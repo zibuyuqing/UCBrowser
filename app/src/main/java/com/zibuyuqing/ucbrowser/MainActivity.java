@@ -1,9 +1,12 @@
 package com.zibuyuqing.ucbrowser;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -12,6 +15,7 @@ import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
+import com.zibuyuqing.ucbrowser.model.bean.UCPager;
 import com.zibuyuqing.ucbrowser.ui.fragment.NewsListFragment;
 import com.zibuyuqing.ucbrowser.utils.Constants;
 import com.zibuyuqing.ucbrowser.utils.ViewUtil;
@@ -20,13 +24,14 @@ import com.zibuyuqing.ucbrowser.widget.layout.UCBottomBar;
 import com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
+import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
 import com.zibuyuqing.ucbrowser.widget.stackview.UCStackView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack {
     private static final String TAG = "MainActivity";
     private BaseLayout mTopSearchBar;// 顶部搜索条
     private UCHeadLayout mUCHeadLayout;// 头部
@@ -40,13 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private FrameLayout mPagersManagerLayout;
     private UCStackView mUCStackView;
     private UCPagerAdapter mPagerAdapter;
-    public static Integer[] TEST_DATAS = new Integer[]{
-            R.drawable.test_uc_screen,
-            R.drawable.test_uc_screen,
-            R.drawable.test_uc_screen,
-            R.drawable.test_uc_screen,
-            R.drawable.test_uc_screen,
-    };
+    private List<UCPager> mPagers = new ArrayList<>();
+    private int mSelectPager = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,26 +91,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
-
         mUCBottomBar = (UCBottomBar)findViewById(R.id.llUCBottomBar);
-        mUCBottomBar.findViewById(R.id.ivHome).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
-                    mUCRootView.back2Normal();
-                } else {
-                    mUCRootView.back2Home();
-                }
-            }
-        });
-        mUCBottomBar.findViewById(R.id.flWindowsNum).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(mUCRootView.getMode() != UCRootView.NEWS_MODE)
-                showPagers();
-            }
-        });
-
         mBezierLayout = (BezierLayout)findViewById(R.id.llBezierLayout);
         mUCRootView = (UCRootView) findViewById(R.id.ucRootView);
         mUCRootView.attachScrollStateListener(mTopSearchBar);
@@ -135,17 +116,13 @@ public class MainActivity extends AppCompatActivity {
 
         mPagersManagerLayout = (FrameLayout) findViewById(R.id.flPagersManager);
         mUCStackView = (UCStackView)findViewById(R.id.ucStackView);
-        mPagerAdapter = new UCPagerAdapter(this);
-
-        mPagersManagerLayout.findViewById(R.id.tvBack).
-                setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                hidePagers();
-            }
-        });
+        mPagerAdapter = new UCPagerAdapter(this,this);
         mUCStackView.setAdapter(mPagerAdapter);
 
+        findViewById(R.id.flWindowsNum).setOnClickListener(this);
+        findViewById(R.id.tvBack).setOnClickListener(this);
+        findViewById(R.id.ivHome).setOnClickListener(this);
+        findViewById(R.id.ivAddPager).setOnClickListener(this);
         bindNewsPage();
     }
 
@@ -161,14 +138,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showPagers(){
+        if(mPagers.size() <= 0){
+            mPagers.add(buildUCPager());
+        }
         mPagersManagerLayout.setVisibility(View.VISIBLE);
-        mPagerAdapter.updateData(Arrays.asList(TEST_DATAS));
+        mPagerAdapter.updateData(mPagers);
+        mUCStackView.animateShow(mSelectPager);
         getWindow().setStatusBarColor(getResources().getColor(R.color.pureBlack, null));
+    }
+    private UCPager buildUCPager(){
+        Bitmap pagerPreview = getScreenShot();
+        String title = "UC";
+        int websiteIcon = R.drawable.ic_home;
+        int key = mPagers.size() + 1;
+        UCPager pager = new UCPager(title,websiteIcon,pagerPreview,key);
+        mSelectPager = key;
+        return pager;
+    }
+    private Bitmap getScreenShot() {
+        View view =  getWindow().getDecorView().getRootView();
+        view.setDrawingCacheEnabled(true);
+        try {
+            Bitmap bitmap = view.getDrawingCache();
+            return bitmap;
+            // scale : 10   coverColor: 0x1f000000   radius : 6
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
     public void hidePagers(){
         mPagersManagerLayout.setVisibility(View.GONE);
         initWindow();
     }
+
     private void bindNewsPage() {
         List<BaseNewsFragment> fragments = new ArrayList<>(Constants.NEWS_TITLE.length);
         for(String title : Constants.NEWS_TITLE){
@@ -187,4 +190,42 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setStatusBarColor(getResources().getColor(R.color.themeBlue, null));
     }
 
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.ivHome: {
+                Log.e(TAG," onClick mode = :" + mUCRootView.getMode());
+                if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
+                    mUCRootView.back2Normal();
+                } else {
+                    mUCRootView.back2Home();
+                }
+                break;
+            }
+            case R.id.flWindowsNum:{
+                if(mUCRootView.getMode() != UCRootView.NEWS_MODE)
+                    showPagers();
+                break;
+            }
+            case R.id.tvBack:{
+                hidePagers();
+                break;
+            }
+            case R.id.ivAddPager:{
+                mPagers.add(buildUCPager());
+                hidePagers();
+            }
+        }
+    }
+
+    @Override
+    public void onSelect(int key) {
+        mSelectPager = key;
+        mUCStackView.selectPager(key);
+    }
+
+    @Override
+    public void onClose(int key) {
+        mUCStackView.closePager(key);
+    }
 }

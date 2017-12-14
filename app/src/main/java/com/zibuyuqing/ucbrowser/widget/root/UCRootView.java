@@ -111,12 +111,10 @@ public class UCRootView extends RelativeLayout {
         }
     }
     private void resetTouchState() {
-        if(!attachToFinal()){
-            return;
-        }
         mIsScrolling = false;
         mDirection = SCROLL_NONE;
         mCurrentVelocity = 0;
+        mStartedScroll = false;
         recycleVelocityTracker();
     }
 
@@ -365,6 +363,8 @@ public class UCRootView extends RelativeLayout {
             if(mNextMode == WEBSITE_MODE){
                 return mRate <= -1.0f;
             }
+        } else {
+            return true;
         }
         return mRate >= 0.f;
     }
@@ -414,7 +414,7 @@ public class UCRootView extends RelativeLayout {
                 public void run() {
                     Log.e(TAG, "checkPoint scrollToPositivePosition curRate finish" +",mDirection =:" + mDirection);
                     checkPoint();
-                    resetTouchState();
+                    // endScroll();
                 }
             });
             invalidate();
@@ -424,11 +424,12 @@ public class UCRootView extends RelativeLayout {
     @Override
     public void computeScroll() {
         Log.e(TAG, "computeScroll :: mIsOverScroll :" + attachToFinal());
+        if(attachToFinal()){
+            endScroll();
+        }
         if (mScroller.computeScrollOffset()) {
             Log.e(TAG, "computeScroll :111: mIsOverScroll :" + attachToFinal());
-            if(attachToFinal()){
-                endScroll();
-            } else {
+            if(!attachToFinal()){
                 if(mScroller.isFinished()){
                     scrollToPositivePosition();
                 } else {
@@ -512,16 +513,16 @@ public class UCRootView extends RelativeLayout {
                 ",mDirection =:" + mDirection +",fling =:" + fling);
     }
     private void endScroll(){
-        Log.e(TAG,"endScroll");
-        mCurrentMode = mNextMode;
-        if(mCurrentMode != NORMAL_MODE){
+        Log.e(TAG,"endScroll attachToFinal() =:" + attachToFinal()+",mNextMode =:" + mNextMode+",mRate =:" + mRate);
+        if(mNextMode != NORMAL_MODE){
             setRate(-1.0f);
         } else {
             setRate(0.0f);
         }
-        stopScroller();
+        mCurrentMode = mNextMode;
         onEndScroll();
         resetTouchState();
+        stopScroller();
     }
     private void checkPoint() {
         Log.e(TAG,"checkPoint :: attachToFinal :: =:" + attachToFinal() +"." +
@@ -538,12 +539,13 @@ public class UCRootView extends RelativeLayout {
     }
 
     public void back2Normal() {
+        Log.e(TAG,"back2Normal :: mCurrentMode =:" + mCurrentMode+",mIsScrolling + ;" + mIsScrolling);
         if(mIsScrolling){
             return;
         }
         mIsScrolling = true;
         mDirection = SCROLL_VERTICALLY;
-        Log.e(TAG,"back2Normal :: mCurrentMode =:" + mCurrentMode);
+
         if(mCurrentMode == NORMAL_MODE){
             mNextMode = NEWS_MODE;
         } else {

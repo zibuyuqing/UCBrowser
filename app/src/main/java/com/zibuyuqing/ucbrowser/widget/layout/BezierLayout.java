@@ -110,12 +110,13 @@ public class BezierLayout extends BaseLayout {
             mCategory.setAlpha(1 + 1.25f * rate);
         } else if(mDirection == UCRootView.SCROLL_VERTICALLY) {
 
-            if (rate >= 0) {
+            if (rate >= 0 ) {
 
                 // 下拉
 
                 // FINAL_DISTANCE 为最大能滑动的距离
-                int dis = (int) (FINAL_DISTANCE * rate);
+                float adjustRate = rate * 0.6f;
+                int dis = (int) (FINAL_DISTANCE * adjustRate);
 
                 // 左右边界更新速度是控制点的0.5倍
 

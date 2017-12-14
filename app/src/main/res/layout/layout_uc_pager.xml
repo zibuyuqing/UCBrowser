@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/dimen_48dp">
         <ImageView
-            android:id="@+id/ivPageHome"
+            android:id="@+id/ivWebsiteIcon"
             android:padding="12dp"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_home"
@@ -26,7 +26,7 @@
             android:id="@+id/tvPagerUC"
             android:textSize="20dp"
             android:layout_centerVertical="true"
-            android:layout_toRightOf="@id/ivPageHome"
+            android:layout_toRightOf="@id/ivWebsiteIcon"
             android:text="UC"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
