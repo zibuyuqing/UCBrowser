@@ -3,6 +3,7 @@ package com.zibuyuqing.ucbrowser.widget.stackview;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
@@ -88,7 +89,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     boolean mIsFirstLayout = true;
     private int mLayoutState = LAYOUT_ALL;
     private Interpolator mLinearOutSlowInInterpolator;
-
+    private View mPreviousView;
+    private View mTargetView;
     public UCStackView(@NonNull Context context) {
         this(context, null);
     }
@@ -226,6 +228,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     private void translateViewY(float transY, View view) {
         view.setTranslationY(transY);
+        if(view == getChildAt(mSelectPager - 1)){
+            Log.e(TAG,"translateViewY =:" + view.getTranslationY());
+        }
     }
 
     private void translateViewZ(float transZ, View view) {
@@ -234,10 +239,17 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     public void selectPager(int key){
         mSelectPager = key;
+        animateShow(mSelectPager, mPreviousView, mTargetView, false, new Runnable() {
+            @Override
+            public void run() {
+                mTargetView.setVisibility(GONE);
+            }
+        });
         Toast.makeText(mContext, "点击第" + mSelectPager +" 项", Toast.LENGTH_SHORT).show();
     }
     public void closePager(int key){
-        Toast.makeText(mContext, "关闭了第" + mSelectPager +" 项", Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, "关闭了第" + key +" 项", Toast.LENGTH_SHORT).show();
+        mSwipeHelper.dismissChildByClick(getChildAt(key - 1));
     }
     private void scaleView(float scale, View view) {
         view.setScaleX(scale);
@@ -292,20 +304,102 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         float topSpace = mViewMaxTop;
         return mTotalMotionY / topSpace;
     }
-    public void animateShow(int selectPager){
+    public void animateShow(
+            int selectPager,
+            final View from,
+            final View to,
+            final boolean show,
+            final Runnable onCompletedRunnable)
+    {
+        int duration = 400;
+        int startDelay = 200;
         mSelectPager = selectPager;
         Log.e(TAG,"animateShow :: selectPager =:" + selectPager);
-        ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(this,"alpha",0,1);
-        alphaAnimator.setDuration(500);
-        calculateInitialScrollP();
-        layoutChildren();
-        alphaAnimator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
+        mPreviousView = from;
+        mTargetView = to;
+        if(show) {
+            calculateInitialScrollP();
+            layoutChildren();
+        }
+        final View selectChild = getChildAt(selectPager - 1);
 
+        float nextChildEndTransY = 0;
+        float nextChildStartTransY = 0;
+        int endRange = show ? Math.min(selectPager + 1,getChildCount()) : getChildCount();
+        for(int i= selectPager ;i < endRange; i++){
+            View nextChild = getChildAt(i);
+            nextChildStartTransY = show ? ViewUtil.getScreenSize(getContext()).y : nextChild.getTranslationY();
+            nextChildEndTransY = show ? nextChild.getTranslationY() : ViewUtil.getScreenSize(getContext()).y;
+            ObjectAnimator nextChildAnimator = ObjectAnimator.ofFloat(
+                    nextChild,"translationY",nextChildStartTransY,nextChildEndTransY);
+            nextChildAnimator.setDuration(duration);
+            if(show) {
+                nextChildAnimator.setStartDelay(startDelay);
+            }
+            nextChildAnimator.start();
+            Log.e(TAG,"animateShow :: transY = :" + nextChildStartTransY + " ,nextChildEndTransY =:" + nextChildEndTransY);
+        }
+
+        float transY = selectChild.getTranslationY();
+        float scaleX = selectChild.getScaleX();
+        float scaleY = selectChild.getScaleY();
+        float startScaleX = show ? 1.0f : scaleX;
+        float startScaleY = show ? 1.0f : scaleY;
+        float startTransY = show ? 0 : transY;
+        float endScaleX = show ? scaleX : 1.0f;
+        float endScaleY = show ? scaleY : 1.0f;
+        float endTransY = show ? transY : 0;
+        /*
+        final float dis = Math.abs(endScaleX - startScaleX);
+        from.setScaleX(startScaleX);
+        from.setScaleY(startScaleY);
+        from.setTranslationY(startTransY);
+        */
+        selectChild.setScaleX(startScaleX);
+        selectChild.setScaleY(startScaleY);
+        selectChild.setTranslationY(startTransY);
+        if(show) {
+           to.setAlpha(0);
+        }
+        PropertyValuesHolder scaleXHolder = PropertyValuesHolder.ofFloat("scaleX",startScaleX,endScaleX);
+        PropertyValuesHolder scaleYHolder = PropertyValuesHolder.ofFloat("scaleY",startScaleY,endScaleY);
+        PropertyValuesHolder transYHolder = PropertyValuesHolder.ofFloat("translationY",startTransY,endTransY);
+        ObjectAnimator showAnimator = ObjectAnimator.ofPropertyValuesHolder(selectChild,scaleXHolder,scaleYHolder,transYHolder);
+        showAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                /*
+                float value = ((Float) valueAnimator.getAnimatedValue()).floatValue();
+
+                float fromViewAlpha = (1.0f - (1.f - value) / dis * 1.2f);
+                Log.e(TAG,"value =:" + fromViewAlpha);
+                float toViewAlpha = 1.0f - fromViewAlpha;
+                from.setAlpha(fromViewAlpha);
+                to.setAlpha(toViewAlpha > 1.0f ? 1.0f : toViewAlpha);
+                */
             }
         });
-        alphaAnimator.start();
+        showAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if(onCompletedRunnable != null){
+                    onCompletedRunnable.run();
+                }
+            }
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                mPreviousView.setVisibility(VISIBLE);
+                mTargetView.setVisibility(VISIBLE);
+                selectChild.setVisibility(VISIBLE);
+                to.setAlpha(1.0f);
+            }
+        });
+        if(show) {
+            showAnimator.setStartDelay(startDelay);
+        }
+        showAnimator.setDuration(duration);
+        showAnimator.start();
     }
     private float calculateViewProgress(int index,float progress) {
         return PROGRESS_STEP * index + progress;
@@ -701,6 +795,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 mLayoutState = LAYOUT_ALL;
                 updateScrollProgressRange();
                 mActivePager = INVALID_POSITION;
+                mStackAdapter.get
             }
         });
     }

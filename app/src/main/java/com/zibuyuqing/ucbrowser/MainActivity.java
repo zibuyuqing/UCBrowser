@@ -143,8 +143,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         mPagersManagerLayout.setVisibility(View.VISIBLE);
         mPagerAdapter.updateData(mPagers);
-        mUCStackView.animateShow(mSelectPager);
         getWindow().setStatusBarColor(getResources().getColor(R.color.pureBlack, null));
+        mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,true, new Runnable() {
+            @Override
+            public void run() {
+                mUCRootView.setVisibility(View.GONE);
+            }
+        });
     }
     private UCPager buildUCPager(){
         Bitmap pagerPreview = getScreenShot();
@@ -167,9 +172,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return null;
     }
-    public void hidePagers(){
-        mPagersManagerLayout.setVisibility(View.GONE);
-        initWindow();
+    public void hidePagers(boolean animated){
+        if(animated){
+            mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,false, new Runnable() {
+                @Override
+                public void run() {
+                    mPagersManagerLayout.setVisibility(View.GONE);
+                    initWindow();
+                }
+            });
+        } else {
+            mUCRootView.setVisibility(View.VISIBLE);
+            mPagersManagerLayout.setVisibility(View.GONE);
+            initWindow();
+        }
+
     }
 
     private void bindNewsPage() {
@@ -208,12 +225,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             }
             case R.id.tvBack:{
-                hidePagers();
+                hidePagers(true);
                 break;
             }
             case R.id.ivAddPager:{
                 mPagers.add(buildUCPager());
-                hidePagers();
+                hidePagers(false);
             }
         }
     }

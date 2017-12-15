@@ -313,7 +313,9 @@ public class SwipeHelper {
         // Vertical swipes are always valid.
         return true;
     }
-
+    public void dismissChildByClick(View view){
+        dismissChild(view,1000);
+    }
     private void endSwipe(VelocityTracker velocityTracker) {
         velocityTracker.computeCurrentVelocity(1000 /* px/sec */);
         float velocity = getVelocity(velocityTracker);
