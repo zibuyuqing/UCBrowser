@@ -91,6 +91,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private Interpolator mLinearOutSlowInInterpolator;
     private View mPreviousView;
     private View mTargetView;
+    private boolean mIsAnimating = false;
     public UCStackView(@NonNull Context context) {
         this(context, null);
     }
@@ -243,13 +244,14 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             @Override
             public void run() {
                 mTargetView.setVisibility(GONE);
+                mPreviousView.setVisibility(VISIBLE);
             }
         });
         Toast.makeText(mContext, "点击第" + mSelectPager +" 项", Toast.LENGTH_SHORT).show();
     }
     public void closePager(int key){
         Toast.makeText(mContext, "关闭了第" + key +" 项", Toast.LENGTH_SHORT).show();
-        mSwipeHelper.dismissChildByClick(getChildAt(key - 1));
+        mSwipeHelper.dismissChildByClick(getChildAt(key));
     }
     private void scaleView(float scale, View view) {
         view.setScaleX(scale);
@@ -311,6 +313,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             final boolean show,
             final Runnable onCompletedRunnable)
     {
+        if(mIsAnimating){
+            return;
+        }
         int duration = 400;
         int startDelay = 200;
         mSelectPager = selectPager;
@@ -322,7 +327,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             layoutChildren();
         }
         final View selectChild = getChildAt(selectPager - 1);
-
         float nextChildEndTransY = 0;
         float nextChildStartTransY = 0;
         int endRange = show ? Math.min(selectPager + 1,getChildCount()) : getChildCount();
@@ -385,14 +389,18 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 if(onCompletedRunnable != null){
                     onCompletedRunnable.run();
                 }
+                mIsAnimating = false;
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
-                mPreviousView.setVisibility(VISIBLE);
+                if(show) {
+                    mPreviousView.setVisibility(GONE);
+                }
                 mTargetView.setVisibility(VISIBLE);
                 selectChild.setVisibility(VISIBLE);
                 to.setAlpha(1.0f);
+                mIsAnimating = true;
             }
         });
         if(show) {
@@ -644,8 +652,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mIsScrolling = false;
     }
 
-    private boolean isAnimating() {
-        return mScrollAnimator != null && mScrollAnimator.isRunning();
+    public boolean isAnimating() {
+        return mScrollAnimator != null && mScrollAnimator.isRunning() || mIsAnimating;
     }
 
     /**
@@ -795,7 +803,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 mLayoutState = LAYOUT_ALL;
                 updateScrollProgressRange();
                 mActivePager = INVALID_POSITION;
-                mStackAdapter.get
             }
         });
     }

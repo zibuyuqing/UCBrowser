@@ -22,6 +22,7 @@
         android:layout_height="match_parent">
     </com.zibuyuqing.ucbrowser.widget.stackview.UCStackView>
     <RelativeLayout
+        android:id="@+id/bottomBar"
         android:background="@color/pureBlack"
         android:layout_gravity="bottom"
         android:layout_width="match_parent"

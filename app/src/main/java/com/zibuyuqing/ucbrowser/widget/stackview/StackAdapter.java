@@ -31,6 +31,35 @@ public abstract class StackAdapter<T> extends UCStackView.Adapter<UCStackView.Vi
     public void updateData(List<T> data){
         setData(data);
     }
+    public List<T> getData(){
+        return mData;
+    }
+    public void addData(int index,T t,boolean notify){
+        if(index < 0 || index > mData.size()){
+            return;
+        }
+        mData.add(index,t);
+        if(notify) notifyDataSetChanged();
+    }
+    public void addData(T t,boolean notify){
+        mData.add(t);
+        if(notify) notifyDataSetChanged();
+    }
+    public void removeData(T t,boolean notify){
+        if(mData.contains(t)) {
+            mData.remove(t);
+            if (notify) notifyDataSetChanged();
+        }
+    }
+    public void removeData(int index,boolean notify){
+        if(index < 0 || index > mData.size()){
+            return;
+        }
+        mData.remove(index);
+        if(notify){
+            notifyDataSetChanged();
+        }
+    }
     @Override
     protected void onBindViewHolder(UCStackView.ViewHolder holder, int position) {
         T data = mData.get(position);

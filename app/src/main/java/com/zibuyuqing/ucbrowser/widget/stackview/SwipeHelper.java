@@ -314,7 +314,8 @@ public class SwipeHelper {
         return true;
     }
     public void dismissChildByClick(View view){
-        dismissChild(view,1000);
+        Log.e(TAG,"dismissChildByClick :: view");
+        dismissChild(view,500);
     }
     private void endSwipe(VelocityTracker velocityTracker) {
         velocityTracker.computeCurrentVelocity(1000 /* px/sec */);

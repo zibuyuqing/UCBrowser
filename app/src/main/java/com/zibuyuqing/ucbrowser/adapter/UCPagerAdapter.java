@@ -41,6 +41,7 @@ public class UCPagerAdapter extends StackAdapter<UCPager> {
         ImageView ivPagePreview,ivWebsiteIcon,ivClose;
         TextView tvPosition;
         UCPager ucPager;
+        int position;
         public PagerViewHolder(View view) {
             super(view);
             content = view;
@@ -59,6 +60,7 @@ public class UCPagerAdapter extends StackAdapter<UCPager> {
             ivClose.setOnClickListener(this);
             content.setOnClickListener(this);
             ucPager = pager;
+            this.position = position;
         }
 
         @Override

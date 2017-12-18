@@ -1,5 +1,8 @@
 package com.zibuyuqing.ucbrowser;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.support.design.widget.TabLayout;
@@ -10,6 +13,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
@@ -29,7 +34,11 @@ import com.zibuyuqing.ucbrowser.widget.stackview.UCStackView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack {
     private static final String TAG = "MainActivity";
@@ -45,7 +54,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private FrameLayout mPagersManagerLayout;
     private UCStackView mUCStackView;
     private UCPagerAdapter mPagerAdapter;
+    private TextView mPagersNum;
     private List<UCPager> mPagers = new ArrayList<>();
+    private List<Integer> mPagerIds = new ArrayList<>();
     private int mSelectPager = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +125,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mNewsPager = (ViewPager) mUCNewsLayout.findViewById(R.id.vpUCNewsPager);
         mNewsTab = (TabLayout) mUCNewsLayout.findViewById(R.id.tlUCNewsTab);
 
+        mPagersNum = (TextView)findViewById(R.id.tvPagerNum);
+
         mPagersManagerLayout = (FrameLayout) findViewById(R.id.flPagersManager);
         mUCStackView = (UCStackView)findViewById(R.id.ucStackView);
         mPagerAdapter = new UCPagerAdapter(this,this);
@@ -126,6 +139,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bindNewsPage();
     }
 
+    /**
+     * 重写back键逻辑
+     */
     @Override
     public void onBackPressed() {
         if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
@@ -137,9 +153,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * 进入页面管理界面，用动画改变选择页（可以理解为一张截图）的Y和scale
+     */
     public void showPagers(){
+        if(mUCStackView.isAnimating()){
+            return;
+        }
         if(mPagers.size() <= 0){
-            mPagers.add(buildUCPager());
+            addUCPager(false);
         }
         mPagersManagerLayout.setVisibility(View.VISIBLE);
         mPagerAdapter.updateData(mPagers);
@@ -151,6 +173,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
+
+    /**
+     *
+     * @param animate 是否有动画，有动画时即UCRootView从下往上移
+     */
+    private void addUCPager(boolean animate){
+        mUCRootView.setVisibility(View.VISIBLE);
+        if(animate) {
+            ObjectAnimator animator = ObjectAnimator.ofFloat(
+                    mUCRootView,
+                    "translationY",
+                    ViewUtil.getScreenSize(this).y,
+                    0);
+            animator.setDuration(500);
+            animator.start();
+            animator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    UCPager pager = buildUCPager();
+                    mPagers.add(pager);
+                    mPagerIds.add(pager.getKey());
+                    hidePagers(false); // 把页面管理页隐藏
+                    mPagersNum.setText("" + mPagers.size()); // 更新页面数量
+                    initWindow(); // 更改状态栏颜色
+                }
+
+                @Override
+                public void onAnimationStart(Animator animation) {
+
+                }
+            });
+        } else {
+            UCPager pager = buildUCPager();
+            mPagers.add(pager);
+            mPagerIds.add(pager.getKey());
+        }
+
+    }
+    private void removeUCPager(int index){
+        mPagers.remove(index);
+        mPagerIds.remove(index);
+    }
+
+    /**
+     * 新建一页并初始化页面，这里的ICON为网站图标，我没资源先用UC代替，title为网站title，key为定义的页面ID
+     * previewBitmap 为页面的截图
+     * 当新建一页时，让我们的选择页置为新建的这一页，然后下次进入页面管理页时初始化进度
+     * @return
+     */
     private UCPager buildUCPager(){
         Bitmap pagerPreview = getScreenShot();
         String title = "UC";
@@ -160,33 +231,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSelectPager = key;
         return pager;
     }
+
+    /**
+     * 获取页面截图
+     * @return
+     */
     private Bitmap getScreenShot() {
         View view =  getWindow().getDecorView().getRootView();
         view.setDrawingCacheEnabled(true);
         try {
             Bitmap bitmap = view.getDrawingCache();
             return bitmap;
-            // scale : 10   coverColor: 0x1f000000   radius : 6
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
     public void hidePagers(boolean animated){
+        if(mUCStackView.isAnimating()){
+            return;
+        }
+        int pagerNum = mPagers.size();
         if(animated){
             mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,false, new Runnable() {
                 @Override
                 public void run() {
                     mPagersManagerLayout.setVisibility(View.GONE);
+                    mUCRootView.setVisibility(View.VISIBLE);
                     initWindow();
                 }
             });
         } else {
-            mUCRootView.setVisibility(View.VISIBLE);
             mPagersManagerLayout.setVisibility(View.GONE);
+            mUCBottomBar.setVisibility(View.VISIBLE);
             initWindow();
         }
-
+        mPagersNum.setText("" + pagerNum);
     }
 
     private void bindNewsPage() {
@@ -225,12 +305,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             }
             case R.id.tvBack:{
+                if(mSelectPager == 0){
+                    Toast.makeText(this,"需要创建新的一页",Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 hidePagers(true);
                 break;
             }
             case R.id.ivAddPager:{
-                mPagers.add(buildUCPager());
-                hidePagers(false);
+                addUCPager(true);
             }
         }
     }
@@ -243,6 +326,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClose(int key) {
-        mUCStackView.closePager(key);
+        if(!mPagerIds.contains(key)){
+            return;
+        }
+        Log.e(TAG,"onClose ::  start mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount() +",key =:" + key);
+        int index = mPagerIds.indexOf(key);
+        mUCStackView.closePager(index);
+        if(mSelectPager >= 2){
+            mSelectPager --;
+        } else {
+            if(mUCStackView.getChildCount() <= 1){
+                mSelectPager = 0;
+                addUCPager(true);
+            }
+        }
+        removeUCPager(index);
+
+        Log.e(TAG,"onClose ::  end mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount());
     }
 }
