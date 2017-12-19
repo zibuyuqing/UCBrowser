@@ -1,4 +1,4 @@
-package com.zibuyuqing.ucbrowser.widget.stackview;
+package com.zibuyuqing.stackview;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -13,9 +13,6 @@ import android.view.VelocityTracker;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LinearInterpolator;
-
-import com.zibuyuqing.ucbrowser.R;
-
 /**
  * Created by Xijun.Wang on 2017/12/4.
  */

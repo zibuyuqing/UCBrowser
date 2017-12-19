@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -16,29 +15,24 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.zibuyuqing.common.utils.ViewUtil;
+import com.zibuyuqing.stackview.widget.UCStackView;
 import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
-import com.zibuyuqing.ucbrowser.model.bean.UCPager;
+import com.zibuyuqing.ucbrowser.model.bean.pager.UCPager;
 import com.zibuyuqing.ucbrowser.ui.fragment.NewsListFragment;
 import com.zibuyuqing.ucbrowser.utils.Constants;
-import com.zibuyuqing.ucbrowser.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.widget.layout.BezierLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCBottomBar;
 import com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
-import com.zibuyuqing.ucbrowser.widget.stackview.UCStackView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack {
     private static final String TAG = "MainActivity";

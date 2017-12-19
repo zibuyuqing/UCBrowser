@@ -1,8 +1,10 @@
-package com.zibuyuqing.ucbrowser.widget.stackview;
+package com.zibuyuqing.stackview.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+
+import com.zibuyuqing.stackview.widget.UCStackView;
 
 import java.util.ArrayList;
 import java.util.List;

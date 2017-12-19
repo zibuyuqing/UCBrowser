@@ -5,9 +5,9 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
-import com.zibuyuqing.ucbrowser.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 
 /**

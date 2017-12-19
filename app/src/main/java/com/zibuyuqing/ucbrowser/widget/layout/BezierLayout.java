@@ -7,14 +7,13 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
-import com.zibuyuqing.ucbrowser.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.widget.drawable.AlphaDrawable;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 

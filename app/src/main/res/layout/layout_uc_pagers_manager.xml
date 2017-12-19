@@ -15,12 +15,12 @@
             android:layout_width="@dimen/dimen_48dp"
             android:layout_height="@dimen/dimen_48dp" />
     </RelativeLayout>
-    <com.zibuyuqing.ucbrowser.widget.stackview.UCStackView
+    <com.zibuyuqing.stackview.widget.UCStackView
         android:layout_weight="1"
         android:id="@+id/ucStackView"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    </com.zibuyuqing.ucbrowser.widget.stackview.UCStackView>
+    </com.zibuyuqing.stackview.widget.UCStackView>
     <RelativeLayout
         android:id="@+id/bottomBar"
         android:background="@color/pureBlack"

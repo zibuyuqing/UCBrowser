@@ -1,4 +1,4 @@
-package com.zibuyuqing.ucbrowser.model.bean;
+package com.zibuyuqing.ucbrowser.model.bean.pager;
 
 import android.graphics.Bitmap;
 
