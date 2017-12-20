@@ -34,7 +34,7 @@ import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack, UCStackView.OnChildDismissedListener {
     private static final String TAG = "MainActivity";
     private BaseLayout mTopSearchBar;// 顶部搜索条
     private UCHeadLayout mUCHeadLayout;// 头部
@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mUCStackView = (UCStackView)findViewById(R.id.ucStackView);
         mPagerAdapter = new UCPagerAdapter(this,this);
         mUCStackView.setAdapter(mPagerAdapter);
+        mUCStackView.setOnChildDismissedListener(this);
 
         findViewById(R.id.flWindowsNum).setOnClickListener(this);
         findViewById(R.id.tvBack).setOnClickListener(this);
@@ -245,6 +246,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(mUCStackView.isAnimating()){
             return;
         }
+        mSelectPager = mUCStackView.getSelectPager();
         int pagerNum = mPagers.size();
         if(animated){
             mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,false, new Runnable() {
@@ -326,6 +328,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.e(TAG,"onClose ::  start mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount() +",key =:" + key);
         int index = mPagerIds.indexOf(key);
         mUCStackView.closePager(index);
+        onUCPagerClosed(index);
+        Log.e(TAG,"onClose ::  end mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount());
+    }
+    private void onUCPagerClosed(int index){
         if(mSelectPager >= 2){
             mSelectPager --;
         } else {
@@ -335,7 +341,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
         removeUCPager(index);
+    }
 
-        Log.e(TAG,"onClose ::  end mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount());
+    @Override
+    public void onChildDismissed(int index) {
+        onUCPagerClosed(index);
     }
 }

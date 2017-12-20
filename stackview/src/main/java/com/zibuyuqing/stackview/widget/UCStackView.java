@@ -96,6 +96,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private View mPreviousView;
     private View mTargetView;
     private boolean mIsAnimating = false;
+    private OnChildDismissedListener mListener;
     public UCStackView(@NonNull Context context) {
         this(context, null);
     }
@@ -156,7 +157,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         }
         layoutChildren();
     }
-
+    public void setOnChildDismissedListener(OnChildDismissedListener listener){
+        mListener = listener;
+    }
     /**
      * 这个是核心方法，在这里我们根据每个view的位置，设置大小，transY ，以及点击范围
      */
@@ -902,6 +905,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 mLayoutState = LAYOUT_ALL;
                 updateScrollProgressRange();
                 mActivePager = INVALID_POSITION;
+                if(mListener != null){
+                    mListener.onChildDismissed(mActivePager);
+                }
             }
         });
     }
@@ -922,6 +928,10 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         Point realSize = new Point();
         display.getRealSize(realSize);
         return realSize;
+    }
+
+    public int getSelectPager() {
+        return mSelectPager;
     }
 
     public static abstract class Adapter<VH extends ViewHolder> {
@@ -996,5 +1006,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         }
     }
 
-
+    public interface OnChildDismissedListener{
+        void onChildDismissed(int index);
+    }
 }
