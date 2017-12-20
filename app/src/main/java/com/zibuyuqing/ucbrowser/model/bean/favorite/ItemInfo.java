@@ -7,12 +7,15 @@ import android.graphics.Bitmap;
  */
 
 public class ItemInfo {
-    protected Bitmap icon;
-    protected String description;
-    protected String url;
-    protected int cellX;
-    protected int cellY;
-
+    public Bitmap icon;
+    public String description;
+    public String url;
+    public int cellX;
+    public int cellY;
+    /**
+     * Indicates the position in an ordered list.
+     */
+    public int rank = 0;
     public Bitmap getIcon() {
         return icon;
     }

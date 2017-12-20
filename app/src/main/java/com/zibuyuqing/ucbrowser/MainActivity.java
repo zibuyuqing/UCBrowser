@@ -31,8 +31,24 @@ import com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Cancellable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack, UCStackView.OnChildDismissedListener {
     private static final String TAG = "MainActivity";
@@ -314,6 +330,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private void printWebPage(){
+        Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> e) throws Exception {
+                URL url = new URL("https://baidu.com/");
+                URLConnection connection = url.openConnection();
+                DataInputStream dis = new DataInputStream(connection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(dis,"UTF-8"));
+                String html = "";
+                String readLine = "";
+                while ((readLine = reader.readLine()) != null){
+                    html += html + readLine;
+                    Log.i("html",readLine);
+                }
+                e.onNext(html);
+            }})
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        Log.i("accept :: html", s);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        Log.e("accept :: throwable", throwable.getMessage());
+                    }
+                });
+    }
     @Override
     public void onSelect(int key) {
         mSelectPager = key;
