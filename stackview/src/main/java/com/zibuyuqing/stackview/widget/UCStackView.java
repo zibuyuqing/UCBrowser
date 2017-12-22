@@ -49,7 +49,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     public static final float PROGRESS_STEP = 0.2f; // 每个页面的进度差
     public static final float BASE_MAX_SCROLL_P = 0.72f; // 用于标记参考页最大能滑动的进度
     public static final float BASE_MIN_SCROLL_P = 0.34f; // 用于标记参考页最小能滑动的进度
-    public static final float PROGRESS_START = 0.8f; // 规定一个定值，用于计算选择页初始进度
+    public static final float PROGRESS_START = 0.6f; // 规定一个定值，用于计算选择页初始进度
     public static final float DEFAULT_VIEW_MAX_SCALE = 0.9f;
     public static final float DEFAULT_VIEW_MIN_SCALE = 0.7f;
     private StackAdapter mStackAdapter;
@@ -170,6 +170,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         float transZ;
         View child;
         mChildTouchRect = new Rect[childCount];
+        Log.e(TAG,"layoutChildren :: layoutChildren :: mLayoutState =:" + mLayoutState);
         for (int i = 0; i < childCount; i++) {
 
             child = getChildAt(i);
@@ -252,9 +253,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     // 更新view的y
     private void translateViewY(float transY, View view) {
         view.setTranslationY(transY);
-        if(view == getChildAt(mSelectPager - 1)){
-            Log.e(TAG,"translateViewY =:" + view.getTranslationY());
-        }
     }
     // 更新view的z
     private void translateViewZ(float transZ, View view) {
@@ -330,8 +328,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
      * @param key
      */
     public void closePager(int key){
-        Toast.makeText(mContext, "关闭了第" + key +" 项", Toast.LENGTH_SHORT).show();
         mSwipeHelper.dismissChildByClick(getChildAt(key));
+        mIsAnimating = true;
     }
     /**
      * 计算阻尼，当超过我们设定的位置时，让用户在滑动的时候感到“吃力”
@@ -382,12 +380,12 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             layoutChildren();
         }
 
-        final View selectChild = getChildAt(selectPager - 1);
+        final View selectChild = getChildAt(selectPager);
         float nextChildEndTransY = 0;
         float nextChildStartTransY = 0;
-        int endRange = show ? Math.min(selectPager + 1,getChildCount()) : getChildCount();
+        int endRange = show ? Math.min(selectPager + 2,getChildCount()) : getChildCount();
 
-        // 如果选择的页面不是最后一页，我们在进入此界面时，会看到选择页一下的view有个上移动画
+        // 如果选择的页面不是最后一页，我们在进入此界面时，会看到选择页以下的view有个上移动画
         for(int i= selectPager ;i < endRange; i++){
             View nextChild = getChildAt(i);
             nextChildStartTransY = show ? getScreenSize(getContext()).y : nextChild.getTranslationY();
@@ -904,10 +902,11 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 }
                 mLayoutState = LAYOUT_ALL;
                 updateScrollProgressRange();
-                mActivePager = INVALID_POSITION;
                 if(mListener != null){
                     mListener.onChildDismissed(mActivePager);
                 }
+                mActivePager = INVALID_POSITION;
+                mIsAnimating = false;
             }
         });
     }

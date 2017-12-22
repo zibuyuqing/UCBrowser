@@ -9,6 +9,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
@@ -149,6 +150,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.ivAddPager).setOnClickListener(this);
         bindNewsPage();
     }
+    public boolean isAnimating(){
+        return mUCRootView.isAnimating() || mUCStackView.isAnimating();
+    }
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        Log.e(TAG,"dispatchTouchEvent ::isAnimating =: " +isAnimating());
+        if(isAnimating()){
+            return false;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
 
     /**
      * 重写back键逻辑
@@ -192,35 +204,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void addUCPager(boolean animate){
         mUCRootView.setVisibility(View.VISIBLE);
         if(animate) {
-            ObjectAnimator animator = ObjectAnimator.ofFloat(
-                    mUCRootView,
-                    "translationY",
-                    ViewUtil.getScreenSize(this).y,
-                    0);
-            animator.setDuration(500);
-            animator.start();
-            animator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    UCPager pager = buildUCPager();
-                    mPagers.add(pager);
-                    mPagerIds.add(pager.getKey());
-                    hidePagers(false); // 把页面管理页隐藏
-                    mPagersNum.setText("" + mPagers.size()); // 更新页面数量
-                    initWindow(); // 更改状态栏颜色
-                }
-
-                @Override
-                public void onAnimationStart(Animator animation) {
-
-                }
-            });
+           mUCRootView.animateShowFromBottomToTop(new Runnable() {
+               @Override
+               public void run() {
+                   UCPager pager = buildUCPager();
+                   mPagers.add(pager);
+                   mPagerIds.add(pager.getKey());
+                   hidePagers(false); // 把页面管理页隐藏
+                   mPagersNum.setText("" + mPagers.size()); // 更新页面数量
+                   initWindow(); // 更改状态栏颜色
+               }
+           });
         } else {
             UCPager pager = buildUCPager();
             mPagers.add(pager);
             mPagerIds.add(pager.getKey());
         }
-
     }
     private void removeUCPager(int index){
         mPagers.remove(index);
@@ -237,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Bitmap pagerPreview = getScreenShot();
         String title = "UC";
         int websiteIcon = R.drawable.ic_home;
-        int key = mPagers.size() + 1;
+        int key = mPagers.size();
         UCPager pager = new UCPager(title,websiteIcon,pagerPreview,key);
         mSelectPager = key;
         return pager;
@@ -262,7 +261,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(mUCStackView.isAnimating()){
             return;
         }
-        mSelectPager = mUCStackView.getSelectPager();
         int pagerNum = mPagers.size();
         if(animated){
             mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,false, new Runnable() {
@@ -317,8 +315,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             }
             case R.id.tvBack:{
-                if(mSelectPager == 0){
-                    Toast.makeText(this,"需要创建新的一页",Toast.LENGTH_SHORT).show();
+                if(mSelectPager < 0){
                     return;
                 }
                 hidePagers(true);
@@ -330,61 +327,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void printWebPage(){
-        Observable.create(new ObservableOnSubscribe<String>() {
-            @Override
-            public void subscribe(ObservableEmitter<String> e) throws Exception {
-                URL url = new URL("https://baidu.com/");
-                URLConnection connection = url.openConnection();
-                DataInputStream dis = new DataInputStream(connection.getInputStream());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(dis,"UTF-8"));
-                String html = "";
-                String readLine = "";
-                while ((readLine = reader.readLine()) != null){
-                    html += html + readLine;
-                    Log.i("html",readLine);
-                }
-                e.onNext(html);
-            }})
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<String>() {
-                    @Override
-                    public void accept(String s) throws Exception {
-                        Log.i("accept :: html", s);
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Log.e("accept :: throwable", throwable.getMessage());
-                    }
-                });
-    }
     @Override
     public void onSelect(int key) {
-        mSelectPager = key;
-        mUCStackView.selectPager(key);
+        if(mUCStackView.isAnimating()){
+            return;
+        }
+        int index = mPagerIds.indexOf(key);
+        mSelectPager = index;
+        mUCStackView.selectPager(index);
+        Log.e(TAG,"onSelect :: key =:" + key);
     }
 
     @Override
     public void onClose(int key) {
+        Log.e(TAG,"onClose :: key = :" + key);
         if(!mPagerIds.contains(key)){
             return;
         }
         Log.e(TAG,"onClose ::  start mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount() +",key =:" + key);
         int index = mPagerIds.indexOf(key);
         mUCStackView.closePager(index);
-        onUCPagerClosed(index);
         Log.e(TAG,"onClose ::  end mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount());
     }
     private void onUCPagerClosed(int index){
-        if(mSelectPager >= 2){
-            mSelectPager --;
-        } else {
-            if(mUCStackView.getChildCount() <= 1){
-                mSelectPager = 0;
-                addUCPager(true);
+        if(index <= mSelectPager){
+            if(mSelectPager >= 1){
+                mSelectPager --;
             }
+        }
+        Log.e(TAG,"onUCPagerClosed ---- mSelectPager =:" + mSelectPager);
+        if(mUCStackView.getChildCount() <= 0){
+            addUCPager(true);
         }
         removeUCPager(index);
     }

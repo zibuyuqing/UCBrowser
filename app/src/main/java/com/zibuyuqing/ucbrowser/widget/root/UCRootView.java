@@ -17,7 +17,9 @@ import android.view.animation.Interpolator;
 import android.widget.OverScroller;
 import android.widget.RelativeLayout;
 
+import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.R;
+import com.zibuyuqing.ucbrowser.model.bean.pager.UCPager;
 
 import java.security.acl.LastOwnerException;
 import java.util.ArrayList;
@@ -67,6 +69,8 @@ public class UCRootView extends RelativeLayout {
     private Interpolator mLinearOutSlowInInterpolator;
     private float mRate;
     private boolean mStartedScroll = false;
+    private boolean mIsAnimating = false;
+
     public UCRootView(@NonNull Context context) {
         this(context, null);
     }
@@ -351,8 +355,27 @@ public class UCRootView extends RelativeLayout {
         }
         return true;
     }
-    private boolean isAnimating() {
-        return mScrollAnimator != null && mScrollAnimator.isRunning();
+    public boolean isAnimating() {
+        return mScrollAnimator != null && mScrollAnimator.isRunning() || mIsAnimating;
+    }
+    public void animateShowFromBottomToTop(final Runnable onCompleteRunnable){
+        ObjectAnimator animator = ObjectAnimator.ofFloat(
+                this,
+                "translationY",
+                ViewUtil.getScreenSize(mContext).y,
+                0);
+        animator.setDuration(500);
+        animator.start();
+        mIsAnimating = true;
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mIsAnimating = false;
+                if(onCompleteRunnable != null){
+                    onCompleteRunnable.run();
+                }
+            }
+        });
     }
     private boolean attachToFinal() {
         if(mDirection == SCROLL_VERTICALLY) {
