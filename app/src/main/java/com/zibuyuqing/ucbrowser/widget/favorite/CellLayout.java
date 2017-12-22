@@ -4,23 +4,37 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Region;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ScrollView;
 
+import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteShortcutInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
+
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Xijun.Wang on 2017/12/19.
  */
 
-public class CellLayout extends ViewGroup {
+public class CellLayout extends ViewGroup implements DragSource {
     private static final String TAG ="CellLayout";
     private static final int START_VIEW_REORDER_DELAY = 30;
     private static final int REORDER_ANIMATION_DURATION = 230;
     private static final float VIEW_REORDER_DELAY_FACTOR = 0.9f;
+    public static final int DRAG_BITMAP_PADDING = 2;
     private int mCellWidth;
     private int mCellHeight;
     private int mCountX;
@@ -31,7 +45,16 @@ public class CellLayout extends ViewGroup {
     private boolean mDragging = false;
     private final Alarm mReorderAlarm = new Alarm();
     private int mTargetRank, mPrevTargetRank, mEmptyCellRank;
-
+    private Canvas mCanvas = new Canvas();
+    private Resources mResources;
+    private Context mContext;
+    private static final Rect sTempRect = new Rect();
+    private final int[] mTempXY = new int[2];
+    private DragController mDragController;
+    private DragLayer mDragLayer;
+    private ItemInfo mCurrentDragInfo;
+    private View mCurrentDragView;
+    private ArrayList<ItemInfo> mInfos = new ArrayList<>();
     private OnAlarmListener mReorderAlarmListener = new OnAlarmListener() {
         public void onAlarm(Alarm alarm) {
             realTimeReorder(mEmptyCellRank, mTargetRank);
@@ -48,6 +71,15 @@ public class CellLayout extends ViewGroup {
 
     public CellLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+    public void setup(DragLayer dragLayer ,DragController dragController){
+        mDragLayer = dragLayer;
+        mDragController = dragController;
+    }
+    private void init() {
+        mContext = getContext();
+        mResources = mContext.getResources();
     }
 
     public void setGridSize(int x, int y) {
@@ -55,10 +87,88 @@ public class CellLayout extends ViewGroup {
         mCountY = y;
         requestLayout();
     }
+    public Bitmap createDragOutline(int width,int height){
+        final Bitmap b = Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
+        mCanvas.setBitmap(b);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(mResources.getColor(R.color.windowBg,null));
+        mCanvas.drawRoundRect(new RectF(0,0,width,height),8,8,paint);
+        return b;
+    }
+    public boolean onLongClick(View v){
+        return beginDragShared(v);
+    }
+    private boolean beginDragShared(View v){
+        Object tag = v.getTag();
+        if(tag instanceof ItemInfo) {
+            if(!v.isInTouchMode()){
+                return false;
+            }
+            ItemInfo item = (ItemInfo) tag;
+            beginDragShared(v, new Point(), this);
+            mCurrentDragInfo = item;
+            mEmptyCellRank = item.rank;
+            mCurrentDragView = v;
+            removeView(mCurrentDragView);
+            mInfos.remove(item);
+        }
+        return true;
+    }
+    private Bitmap createDragBitmap(View child, AtomicInteger aPadding) {
+        int padding = aPadding.get();
+        Bitmap b = Bitmap.createBitmap(
+                child.getWidth() + padding,
+                child.getHeight() + padding,
+                Bitmap.Config.ARGB_8888);
+        mCanvas.setBitmap(b);
+        drawDragView(child,mCanvas,padding);
+        mCanvas.setBitmap(null);
+        return b;
+    }
 
+    private void drawDragView(View child, Canvas canvas, int padding) {
+        final Rect clipRect = sTempRect;
+        child.getDrawingRect(clipRect);
+        canvas.translate(-child.getScrollX() + padding / 2, -child.getScrollY() + padding / 2);
+        canvas.clipRect(clipRect, Region.Op.REPLACE);
+        child.draw(canvas);
+    }
+
+    public void beginDragShared(View child, Point relativeTouchPos,DragSource source){
+        child.clearFocus();
+        child.setPressed(false);
+        AtomicInteger padding = new AtomicInteger(DRAG_BITMAP_PADDING);
+        final Bitmap b = createDragBitmap(child, padding);
+        final int bmpWidth = b.getWidth();
+        final int bmpHeight = b.getHeight();
+        float scale = mDragLayer.getLocationInDragLayer(child, mTempXY);
+        int dragLayerX = Math.round(mTempXY[0] -
+                (bmpWidth - scale * child.getWidth()) / 2);
+        int dragLayerY = Math.round(mTempXY[1] -
+                (bmpHeight - scale * bmpHeight) / 2 - padding.get() / 2);
+        Point dragVisualizeOffset = null;
+        Rect dragRect = null;
+        if(child instanceof FavoriteItemView){
+            dragVisualizeOffset = new Point(-padding.get() / 2,
+                    padding.get() / 2 - child.getPaddingTop());
+            dragRect = new Rect(0, child.getPaddingTop(), child.getWidth(), child.getHeight());
+        }
+        ItemInfo info = (ItemInfo) child.getTag();
+        mDragController.startDrag(mDragLayer,b, dragLayerX, dragLayerY, source, info,
+                DragController.DRAG_ACTION_MOVE, dragVisualizeOffset, dragRect, scale);
+    }
     @Override
-    protected void onLayout(boolean b, int i, int i1, int i2, int i3) {
-
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        int count = getChildCount();
+        for(int i = 0; i < count;i++){
+            View child = getChildAt(i);
+            if(child.getVisibility() != GONE){
+                CellLayout.LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                int childLeft = lp.x;
+                int childTop = lp.y;
+                child.layout(childLeft,childTop,childLeft + lp.width,childTop + lp.height);
+            }
+        }
     }
 
     public View getChildAt(int x, int y) {
@@ -220,6 +330,21 @@ public class CellLayout extends ViewGroup {
         va.setStartDelay(delay);
         va.start();
         return true;
+    }
+
+    public void measureChild(View child) {
+        final int cellWidth = mCellWidth;
+        final int cellHeight = mCellHeight;
+        CellLayout.LayoutParams lp = (CellLayout.LayoutParams) child.getLayoutParams();
+        lp.setup(cellWidth, cellHeight);
+        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
+        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
+        child.measure(childWidthMeasureSpec,childHeightMeasureSpec);
+    }
+
+    @Override
+    public void onDropCompleted(View target, DragObject d, boolean isFlingToDelete, boolean success) {
+
     }
 
     public static class LayoutParams extends ViewGroup.MarginLayoutParams {

@@ -5,7 +5,7 @@ package com.zibuyuqing.ucbrowser.widget.favorite;
  */
 
 public interface DragListener {
-    void onDragStart();
+    void onDragStart(DragSource source, Object info, int dragAction);
     void onDragEnd();
     void move(int x,int y);
 }
