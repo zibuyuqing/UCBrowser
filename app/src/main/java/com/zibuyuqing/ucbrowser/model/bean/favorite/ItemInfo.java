@@ -55,4 +55,11 @@ public class ItemInfo {
     public void setCellY(int cellY) {
         this.cellY = cellY;
     }
+
+    @Override
+    public String toString() {
+        return "ItemInfo ( " +
+                "cellX = :" + cellX + ",cellY =:" + cellY +",rank =:" + rank +
+                " ,des =:"+ description + ",url =:" + url + ",this =:" + this.hashCode() +")";
+    }
 }

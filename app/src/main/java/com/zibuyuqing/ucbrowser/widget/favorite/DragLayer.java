@@ -167,6 +167,10 @@ public class DragLayer extends FrameLayout {
         return new LayoutParams(p);
     }
 
+    public DragController getDragController() {
+        return mDragController;
+    }
+
     public static class LayoutParams extends FrameLayout.LayoutParams {
         public int x, y;
         public boolean customPosition = false;

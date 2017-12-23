@@ -22,9 +22,14 @@ import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
+import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteShortcutInfo;
+import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
 import com.zibuyuqing.ucbrowser.model.bean.pager.UCPager;
 import com.zibuyuqing.ucbrowser.ui.fragment.NewsListFragment;
 import com.zibuyuqing.ucbrowser.utils.Constants;
+import com.zibuyuqing.ucbrowser.widget.favorite.DragController;
+import com.zibuyuqing.ucbrowser.widget.favorite.DragLayer;
+import com.zibuyuqing.ucbrowser.widget.favorite.FavoriteWorkspace;
 import com.zibuyuqing.ucbrowser.widget.layout.BezierLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCBottomBar;
 import com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout;
@@ -65,6 +70,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private FrameLayout mPagersManagerLayout;
     private UCStackView mUCStackView;
     private UCPagerAdapter mPagerAdapter;
+
+    private DragLayer mDragLayer;
+    private FavoriteWorkspace mWorkspace;
+    private DragController mDragController;
+
     private TextView mPagersNum;
     private List<UCPager> mPagers = new ArrayList<>();
     private List<Integer> mPagerIds = new ArrayList<>();
@@ -143,24 +153,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mPagerAdapter = new UCPagerAdapter(this,this);
         mUCStackView.setAdapter(mPagerAdapter);
         mUCStackView.setOnChildDismissedListener(this);
-
+        mDragLayer = (DragLayer) findViewById(R.id.dragLayer);
+        mWorkspace = (FavoriteWorkspace) findViewById(R.id.favoriteWorkspace);
+        mDragController = new DragController(this,mDragLayer);
+        mDragLayer.setup(mDragController);
+        mWorkspace.setup(mDragLayer);
+        mDragController.addDropTarget(mWorkspace);
         findViewById(R.id.flWindowsNum).setOnClickListener(this);
         findViewById(R.id.tvBack).setOnClickListener(this);
         findViewById(R.id.ivHome).setOnClickListener(this);
         findViewById(R.id.ivAddPager).setOnClickListener(this);
         bindNewsPage();
+        bindFavoriteItems();
+    }
+    private void bindFavoriteItems(){
+        ArrayList<ItemInfo> infos = new ArrayList<>();
+        for(int i = 0; i < 32; i ++){
+            infos.add(buildFavoriteShortcutItem());
+        }
+        mWorkspace.bindItems(infos);
+    }
+    private int mCurrentCount = 0;
+    private ItemInfo buildFavoriteShortcutItem(){
+        FavoriteShortcutInfo shortcutInfo = new FavoriteShortcutInfo();
+        shortcutInfo.setIcon(ViewUtil.drawableToBitmap(getDrawable(R.drawable.ic_favorite_baidu)));
+        shortcutInfo.cellX = shortcutInfo.cellY = shortcutInfo.rank = -1;
+        mCurrentCount ++ ;
+        shortcutInfo.setDescription("百度" + mCurrentCount);
+        shortcutInfo.setUrl("http://baidu.com");
+        return shortcutInfo;
     }
     public boolean isAnimating(){
         return mUCRootView.isAnimating() || mUCStackView.isAnimating();
     }
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        Log.e(TAG,"dispatchTouchEvent ::isAnimating =: " +isAnimating());
-        if(isAnimating()){
-            return false;
-        }
-        return super.dispatchTouchEvent(ev);
-    }
+//    @Override
+//    public boolean dispatchTouchEvent(MotionEvent ev) {
+//        Log.e(TAG,"dispatchTouchEvent ::isAnimating =: " +isAnimating());
+//        if(isAnimating()){
+//            return false;
+//        }
+//        return super.dispatchTouchEvent(ev);
+//    }
 
     /**
      * 重写back键逻辑

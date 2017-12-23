@@ -23,44 +23,36 @@ import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteShortcutInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
 
 import java.util.ArrayList;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Xijun.Wang on 2017/12/19.
  */
 
-public class CellLayout extends ViewGroup implements DragSource {
+public class CellLayout extends ViewGroup {
     private static final String TAG ="CellLayout";
     private static final int START_VIEW_REORDER_DELAY = 30;
     private static final int REORDER_ANIMATION_DURATION = 230;
     private static final float VIEW_REORDER_DELAY_FACTOR = 0.9f;
-    public static final int DRAG_BITMAP_PADDING = 2;
     private int mCellWidth;
+
+    public int getCellWidth() {
+        return mCellWidth;
+    }
+
+    public int getCellHeight() {
+        return mCellHeight;
+    }
+
     private int mCellHeight;
-    private int mCountX;
-    private int mCountY;
     private int mGridCountX;
     private int mGridCountY;
     private final int[] mDragCell = new int[2];
     private boolean mDragging = false;
-    private final Alarm mReorderAlarm = new Alarm();
-    private int mTargetRank, mPrevTargetRank, mEmptyCellRank;
-    private Canvas mCanvas = new Canvas();
-    private Resources mResources;
     private Context mContext;
-    private static final Rect sTempRect = new Rect();
-    private final int[] mTempXY = new int[2];
-    private DragController mDragController;
-    private DragLayer mDragLayer;
-    private ItemInfo mCurrentDragInfo;
-    private View mCurrentDragView;
-    private ArrayList<ItemInfo> mInfos = new ArrayList<>();
-    private OnAlarmListener mReorderAlarmListener = new OnAlarmListener() {
-        public void onAlarm(Alarm alarm) {
-            realTimeReorder(mEmptyCellRank, mTargetRank);
-            mEmptyCellRank = mTargetRank;
-        }
-    };
+    private final int[] mTmpPoint = new int[2];
+    private boolean[][] mOccupied;
     public CellLayout(Context context) {
         this(context, null);
     }
@@ -73,90 +65,41 @@ public class CellLayout extends ViewGroup implements DragSource {
         super(context, attrs, defStyleAttr);
         init();
     }
-    public void setup(DragLayer dragLayer ,DragController dragController){
-        mDragLayer = dragLayer;
-        mDragController = dragController;
-    }
+
     private void init() {
         mContext = getContext();
-        mResources = mContext.getResources();
     }
-
-    public void setGridSize(int x, int y) {
-        mCountX = x;
-        mCountY = y;
+    public void resetContentDimensions(int count) {
+        boolean done = false;
+        while (!done) {
+            int oldCountX = mGridCountX;
+            int oldCountY = mGridCountY;
+            if (mGridCountX * mGridCountY < count) {
+                mGridCountY++;
+            } else if ((mGridCountY - 1) * mGridCountX >= count && mGridCountY >= mGridCountX) {
+                mGridCountY = Math.max(0, mGridCountY - 1);
+            }
+            done = mGridCountX == oldCountX && mGridCountY == oldCountY;
+        }
+        resizeOccupied();
+        Log.e(TAG,"resetContentDimensions :: mGridCountY =:" + mGridCountY +",mGridCountX =:" + mGridCountX);
         requestLayout();
     }
-    public Bitmap createDragOutline(int width,int height){
-        final Bitmap b = Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888);
-        mCanvas.setBitmap(b);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(mResources.getColor(R.color.windowBg,null));
-        mCanvas.drawRoundRect(new RectF(0,0,width,height),8,8,paint);
-        return b;
+    private void resizeOccupied(){
+        mOccupied = new boolean[mGridCountX][mGridCountY];
     }
-    public boolean onLongClick(View v){
-        return beginDragShared(v);
+    public void setGridSize(int x, int y) {
+        mGridCountX = x;
+        mGridCountY = y;
+        resizeOccupied();
+        requestLayout();
     }
-    private boolean beginDragShared(View v){
-        Object tag = v.getTag();
-        if(tag instanceof ItemInfo) {
-            if(!v.isInTouchMode()){
-                return false;
-            }
-            ItemInfo item = (ItemInfo) tag;
-            beginDragShared(v, new Point(), this);
-            mCurrentDragInfo = item;
-            mEmptyCellRank = item.rank;
-            mCurrentDragView = v;
-            removeView(mCurrentDragView);
-            mInfos.remove(item);
-        }
-        return true;
-    }
-    private Bitmap createDragBitmap(View child, AtomicInteger aPadding) {
-        int padding = aPadding.get();
-        Bitmap b = Bitmap.createBitmap(
-                child.getWidth() + padding,
-                child.getHeight() + padding,
-                Bitmap.Config.ARGB_8888);
-        mCanvas.setBitmap(b);
-        drawDragView(child,mCanvas,padding);
-        mCanvas.setBitmap(null);
-        return b;
+    public void setCellDimensions(int width,int height){
+        mCellWidth = width;
+        mCellHeight = height;
+        requestLayout();
     }
 
-    private void drawDragView(View child, Canvas canvas, int padding) {
-        final Rect clipRect = sTempRect;
-        child.getDrawingRect(clipRect);
-        canvas.translate(-child.getScrollX() + padding / 2, -child.getScrollY() + padding / 2);
-        canvas.clipRect(clipRect, Region.Op.REPLACE);
-        child.draw(canvas);
-    }
-
-    public void beginDragShared(View child, Point relativeTouchPos,DragSource source){
-        child.clearFocus();
-        child.setPressed(false);
-        AtomicInteger padding = new AtomicInteger(DRAG_BITMAP_PADDING);
-        final Bitmap b = createDragBitmap(child, padding);
-        final int bmpWidth = b.getWidth();
-        final int bmpHeight = b.getHeight();
-        float scale = mDragLayer.getLocationInDragLayer(child, mTempXY);
-        int dragLayerX = Math.round(mTempXY[0] -
-                (bmpWidth - scale * child.getWidth()) / 2);
-        int dragLayerY = Math.round(mTempXY[1] -
-                (bmpHeight - scale * bmpHeight) / 2 - padding.get() / 2);
-        Point dragVisualizeOffset = null;
-        Rect dragRect = null;
-        if(child instanceof FavoriteItemView){
-            dragVisualizeOffset = new Point(-padding.get() / 2,
-                    padding.get() / 2 - child.getPaddingTop());
-            dragRect = new Rect(0, child.getPaddingTop(), child.getWidth(), child.getHeight());
-        }
-        ItemInfo info = (ItemInfo) child.getTag();
-        mDragController.startDrag(mDragLayer,b, dragLayerX, dragLayerY, source, info,
-                DragController.DRAG_ACTION_MOVE, dragVisualizeOffset, dragRect, scale);
-    }
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int count = getChildCount();
@@ -170,15 +113,34 @@ public class CellLayout extends ViewGroup implements DragSource {
             }
         }
     }
+    public void clearOccupiedCells() {
+        for (int x = 0; x < mGridCountX; x++) {
+            for (int y = 0; y < mGridCountY; y++) {
+                mOccupied[x][y] = false;
+            }
+        }
+    }
+    public void markCellsAsOccupiedForView(View view){
+        LayoutParams lp = (LayoutParams) view.getLayoutParams();
+        updateCellsOccupiedState(lp.cellX, lp.cellY, true);
+    }
 
+    public void markCellsAsUnoccupiedForView(View view) {
+        Log.e(TAG,"markCellsAsUnoccupiedForView ::-- ");
+        LayoutParams lp = (LayoutParams) view.getLayoutParams();
+        updateCellsOccupiedState(lp.cellX, lp.cellY, false);
+    }
+    public void updateCellsOccupiedState(int cellX,int cellY ,boolean occupied){
+        mOccupied[cellX][cellY] = occupied;
+
+    }
     public View getChildAt(int x, int y) {
         final int count = getChildCount();
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
             CellLayout.LayoutParams lp = (CellLayout.LayoutParams) child.getLayoutParams();
-
-            if ((lp.cellX <= x) && (x < lp.cellX) &&
-                    (lp.cellY <= y) && (y < lp.cellY)) {
+            Log.e(TAG,"getChildAt :: x =:" + x +",y = :" + y +",lp.cellX =:" +lp.cellX +",lp.cellY =:" + lp.cellY);
+            if ((lp.cellX == x)  && (lp.cellY == y)) {
                 return child;
             }
         }
@@ -188,7 +150,7 @@ public class CellLayout extends ViewGroup implements DragSource {
      * Adds the {@param view} to the layout based on {@param rank} and updated the position
      * related attributes. It assumes that {@param item} is already attached to the view.
      */
-    public void addViewForRank(View view, FavoriteShortcutInfo item, int rank) {
+    public void addViewForRank(View view, ItemInfo item, int rank) {
         item.rank = rank;
         item.cellX = rank % mGridCountX;
         item.cellY = rank / mGridCountX;
@@ -202,11 +164,14 @@ public class CellLayout extends ViewGroup implements DragSource {
                                        boolean markCells) {
         final LayoutParams lp = params;
 
-        Log.i(TAG,"addViewToCellLayout :: mShortcutsAndWidgets.addView lp.cellX =:" + lp.cellX +",lp.cellY =:" + lp.cellY);
-        if (lp.cellX >= 0 && lp.cellX <= mCountX - 1 && lp.cellY >= 0 && lp.cellY <= mCountY - 1) {
+        Log.e(TAG,"addViewToCellLayout ::.addView lp.cellX =:" + lp.cellX +",lp.cellY =:" + lp.cellY);
+        if (lp.cellX >= 0 && lp.cellX <= mGridCountX - 1 && lp.cellY >= 0 && lp.cellY <= mGridCountY - 1) {
             try {
-                Log.i(TAG,"addViewToCellLayout :: mShortcutsAndWidgets.addView lp.x =:" + lp.x+",lp.cellX =:" + lp.cellX);
+                Log.e(TAG,"addViewToCellLayout ::.addView lp.x =:" + lp.x+",lp.cellX =:" + lp.cellX);
                 addView(child, index, lp);
+                if(markCells){
+                    markCellsAsOccupiedForView(child);
+                }
             } catch (IllegalStateException e) {}
 
             return true;
@@ -232,7 +197,8 @@ public class CellLayout extends ViewGroup implements DragSource {
             // The items will move forward.
             direction = -1;
         }
-        moveStart = moveEnd = -1;
+        moveStart = empty;
+        moveEnd = target;
         startPos = empty;
         endPos = target;
         // Instant moving views.
@@ -253,7 +219,7 @@ public class CellLayout extends ViewGroup implements DragSource {
                     @Override
                     public void run() {
                         v.setTranslationX(oldTranslateX);
-                        ((CellLayout) v.getParent().getParent()).removeView(v);
+                        ((CellLayout) v.getParent()).removeView(v);
                         addViewForRank(v, (FavoriteShortcutInfo) v.getTag(), newRank);
                     }
                 };
@@ -271,9 +237,11 @@ public class CellLayout extends ViewGroup implements DragSource {
             return;
         }
 
+        Log.e(TAG,"realTimeReorder :: startPos :: " + startPos +",endPos =:" + endPos);
         for (int i = startPos; i != endPos; i += direction) {
             int nextPos = i + direction;
             View v = getChildAt(nextPos % mGridCountX, nextPos / mGridCountX);
+            Log.e(TAG,"realTimeReorder :: nextPos :: " + nextPos +",nextPos % mGridCountX  =:" + nextPos % mGridCountX +",nextPos / mGridCountX =:" + nextPos / mGridCountX +",v=:" + v);
             if (v != null) {
                 ((ItemInfo) v.getTag()).rank -= direction;
             }
@@ -284,67 +252,172 @@ public class CellLayout extends ViewGroup implements DragSource {
             }
         }
     }
-    public boolean animateChildToPosition(final View child, int cellX, int cellY, int duration,
-                                          int delay, boolean permanent, boolean adjustOccupied) {
-        final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        final ItemInfo info = (ItemInfo) child.getTag();
-
-        final int oldX = lp.x;
-        final int oldY = lp.y;
-        lp.cellX = info.cellX = cellX;
-        lp.cellY = info.cellY = cellY;
-        final int newX = lp.x;
-        final int newY = lp.y;
-
-        lp.x = oldX;
-        lp.y = oldY;
-
-        ValueAnimator va = AnimUtil.ofFloat(child, 0f, 1f);
-        va.setDuration(duration);
-
-        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float r = ((Float) animation.getAnimatedValue()).floatValue();
-                lp.x = (int) ((1 - r) * oldX + r * newX);
-                lp.y = (int) ((1 - r) * oldY + r * newY);
-                child.requestLayout();
+    private final Stack<Rect> mTempRectStack = new Stack<Rect>();
+    private void lazyInitTempRectStack() {
+        if (mTempRectStack.isEmpty()) {
+            for (int i = 0; i < mGridCountX * mGridCountY; i++) {
+                mTempRectStack.push(new Rect());
             }
-        });
-        va.addListener(new AnimatorListenerAdapter() {
-            boolean cancelled = false;
+        }
+    }
 
-            public void onAnimationEnd(Animator animation) {
-                // If the animation was cancelled, it means that another animation
-                // has interrupted this one, and we don't want to lock the item into
-                // place just yet.
-                if (!cancelled) {
-                    child.requestLayout();
+    public int getCountX() {
+        return mGridCountX;
+    }
+
+    public int getCountY() {
+        return mGridCountY;
+    }
+
+    private void recycleTempRects(Stack<Rect> used) {
+        while (!used.isEmpty()) {
+            mTempRectStack.push(used.pop());
+        }
+    }
+    public int[] findNearestArea(int pixelX, int pixelY, int[] result) {
+        lazyInitTempRectStack();
+
+        // Keep track of best-scoring drop area
+        final int[] bestXY = result != null ? result : new int[2];
+        double bestDistance = Double.MAX_VALUE;
+        final Rect bestRect = new Rect(-1, -1, -1, -1);
+        final Stack<Rect> validRegions = new Stack<Rect>();
+
+        final int countX = mGridCountX;
+        final int countY = mGridCountY;
+
+        for (int y = 0; y < countY; y++) {
+            for (int x = 0; x < countX; x++) {
+                final int[] cellXY = mTmpPoint;
+                cellToCenterPoint(x, y, cellXY);
+                Rect currentRect = mTempRectStack.pop();
+                currentRect.set(x, y, x - 1, y - 1);
+                boolean contained = false;
+                for (Rect r : validRegions) {
+                    if (r.contains(currentRect)) {
+                        contained = true;
+                        break;
+                    }
+                }
+                validRegions.push(currentRect);
+                double distance = Math.hypot(cellXY[0] - pixelX,  cellXY[1] - pixelY);
+
+                if ((distance <= bestDistance && !contained) ||
+                        currentRect.contains(bestRect)) {
+                    bestDistance = distance;
+                    bestXY[0] = x;
+                    bestXY[1] = y;
+                    bestRect.set(currentRect);
+                    Log.e(TAG, "findNearestArea :: bestXY[0] 2222" + bestXY[0] + ",distance =:" + distance + ",bestDistance =:" + bestDistance);
                 }
             }
+        }
 
-            public void onAnimationCancel(Animator animation) {
-                cancelled = true;
+        // Return -1, -1 if no suitable location found
+        if (bestDistance == Double.MAX_VALUE) {
+            Log.e(TAG,"findNearestArea :: bestXY[0] 3333" + bestXY[0]);
+            bestXY[0] = -1;
+            bestXY[1] = -1;
+        }
+        Log.e(TAG,"findNearestArea :: bestXY[0]" + bestXY[0]);
+        recycleTempRects(validRegions);
+        return bestXY;
+    }
+
+    @Override
+    public void onViewRemoved(View child) {
+        super.onViewRemoved(child);
+        markCellsAsUnoccupiedForView(child);
+    }
+
+    private void cellToCenterPoint(int cellX, int cellY, int[] result) {
+        result[0] = cellX * mCellWidth;
+        result[1] = cellY * mCellHeight;
+    }
+
+    public boolean animateChildToPosition(final View child, int cellX, int cellY, int duration,
+                                          int delay, boolean permanent, boolean adjustOccupied) {
+        if(indexOfChild(child) != -1) {
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            final ItemInfo info = (ItemInfo) child.getTag();
+            final int oldX = lp.x;
+            final int oldY = lp.y;
+            lp.cellX = info.cellX = cellX;
+            lp.cellY = info.cellY = cellY;
+            setupLp(lp);
+            final int newX = lp.x;
+            final int newY = lp.y;
+            lp.x = oldX;
+            lp.y = oldY;
+            Log.e(TAG, "animateChildToPosition cellX =:" + cellX + ",cellY= :" + cellY + ",oldX =:" + oldX +",newX =:" + newX);
+
+            ValueAnimator va = AnimUtil.ofFloat(child, 0f, 1f);
+            va.setDuration(duration);
+
+            va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    float r = ((Float) animation.getAnimatedValue()).floatValue();
+                    lp.x = (int) ((1 - r) * oldX + r * newX);
+                    lp.y = (int) ((1 - r) * oldY + r * newY);
+                    child.requestLayout();
+                }
+            });
+            va.addListener(new AnimatorListenerAdapter() {
+                boolean cancelled = false;
+
+                public void onAnimationEnd(Animator animation) {
+                    // If the animation was cancelled, it means that another animation
+                    // has interrupted this one, and we don't want to lock the item into
+                    // place just yet.
+                    if (!cancelled) {
+                        child.requestLayout();
+                    }
+                    Log.e(TAG, "animateChildToPosition onAnimationEnd:");
+                }
+
+                public void onAnimationCancel(Animator animation) {
+                    cancelled = true;
+                }
+            });
+
+            va.setStartDelay(delay);
+            va.start();
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int count = getChildCount();
+        int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightSpecSize =  MeasureSpec.getSize(heightMeasureSpec);
+        setMeasuredDimension(widthSpecSize, heightSpecSize);
+        Log.e(TAG,"onMeasure ============ count =:" + count);
+        for (int i = 0; i < count; i++) {
+            View child = getChildAt(i);
+            if (child.getVisibility() != GONE) {
+                measureChild(child);
             }
-        });
-        va.setStartDelay(delay);
-        va.start();
-        return true;
+        }
     }
 
     public void measureChild(View child) {
-        final int cellWidth = mCellWidth;
-        final int cellHeight = mCellHeight;
         CellLayout.LayoutParams lp = (CellLayout.LayoutParams) child.getLayoutParams();
-        lp.setup(cellWidth, cellHeight);
+        setupLp(lp);
         int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
         int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
         child.measure(childWidthMeasureSpec,childHeightMeasureSpec);
     }
 
-    @Override
-    public void onDropCompleted(View target, DragObject d, boolean isFlingToDelete, boolean success) {
+    public void setupLp(LayoutParams lp) {
+        lp.setup(mCellWidth,mCellHeight);
+    }
 
+    public void removeAndUnMakerView(View child) {
+        markCellsAsUnoccupiedForView(child);
+        removeView(child);
     }
 
     public static class LayoutParams extends ViewGroup.MarginLayoutParams {
@@ -357,8 +430,10 @@ public class CellLayout extends ViewGroup implements DragSource {
             super(c, attrs);
         }
 
-        public LayoutParams(int width, int height) {
-            super(width, height);
+        public LayoutParams(int cellX, int cellY) {
+            super(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+            this.cellX = cellX;
+            this.cellY = cellY;
         }
 
         public LayoutParams(LayoutParams source) {
@@ -376,6 +451,13 @@ public class CellLayout extends ViewGroup implements DragSource {
             height = cellHeight;
             x = cellX * cellWidth + leftMargin;
             y = cellY * cellHeight + topMargin;
+        }
+
+        @Override
+        public String toString() {
+            return "CellLayout LayoutParams (" +
+                    " x = :" + x + ",y = :" + y +",cellX = :" + cellX + ",cellY =:" + cellY +
+                    ",width =:" + width +",height =:" + height + ",this =:" + this.hashCode() +")";
         }
     }
 }

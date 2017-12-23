@@ -8,8 +8,9 @@ import android.graphics.Rect;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
-
+import com.zibuyuqing.ucbrowser.widget.favorite.DropTarget.DragObject;
 import java.util.ArrayList;
 
 /**
@@ -23,6 +24,7 @@ public class DragController {
     private int mMotionDownX;
     private int mMotionDownY;
     private DragObject mDragObject;
+    private ArrayList<DropTarget> mDropTargets = new ArrayList<DropTarget>();
     private ArrayList<DragListener> mListeners = new ArrayList<DragListener>();
     private Context mContext;
 
@@ -33,12 +35,20 @@ public class DragController {
     private Rect mRectTemp = new Rect();
     private final int[] mCoordinatesTemp = new int[2];
     private Rect mDragLayerRect = new Rect();
-
-    public DragController(Context context){
+    private DropTarget mLastDropTarget;
+    public DragController(Context context,DragLayer layer){
         mContext = context;
+        mDragLayer = layer;
+    }
+    public void addDropTarget(DropTarget target){
+        if(!mDropTargets.contains(target)){
+            mDropTargets.add(target);
+        }
+    }
+    public void removeDropTarget(DropTarget target){
+        mDropTargets.remove(target);
     }
     public DragView startDrag(
-            DragLayer parent,
             Bitmap b,
             int dragLayerX,
             int dragLayerY,
@@ -48,7 +58,6 @@ public class DragController {
             Point dragOffset,
             Rect dragRegion,
             float initialDragViewScale) {
-        mDragLayer = parent;
         for (DragListener listener : mListeners) {
             listener.onDragStart(source, dragInfo, dragAction);
         }
@@ -83,7 +92,7 @@ public class DragController {
             dragView.setDragRegion(new Rect(dragRegion));
         }
 
-        dragView.showAt(parent,mMotionDownX, mMotionDownY);
+        dragView.showAt(mDragLayer,mMotionDownX, mMotionDownY);
         handleMoveEvent(mMotionDownX, mMotionDownY);
         return dragView;
     }
@@ -99,6 +108,7 @@ public class DragController {
                 // Remember location of down touch
                 mMotionDownX = dragLayerX;
                 mMotionDownY = dragLayerY;
+                mLastDropTarget = null;
                 break;
             case MotionEvent.ACTION_UP:
                 if (mDragging) {
@@ -159,6 +169,8 @@ public class DragController {
 
         // Drop on someone?
         final int[] coordinates = mCoordinatesTemp;
+        DropTarget dropTarget = findDropTarget(x, y, coordinates);
+        checkTouchMove(dropTarget);
         mDragObject.x = coordinates[0];
         mDragObject.y = coordinates[1];
 
@@ -170,11 +182,52 @@ public class DragController {
         mLastTouch[0] = x;
         mLastTouch[1] = y;
     }
+    private void checkTouchMove(DropTarget dropTarget) {
+        Log.e(TAG,"checkTouchMove :: dropTarget =:" + dropTarget);
+        if (dropTarget != null) {
+            if (mLastDropTarget != dropTarget) {
+                if (mLastDropTarget != null) {
+                    mLastDropTarget.onDragExit(mDragObject);
+                }
+                dropTarget.onDragEnter(mDragObject);
+            }
+            dropTarget.onDragOver(mDragObject);
+        } else {
+            if (mLastDropTarget != null) {
+                mLastDropTarget.onDragExit(mDragObject);
+            }
+        }
+        mLastDropTarget = dropTarget;
+    }
+
     public boolean dispatchKeyEvent(KeyEvent keyEvent){
         return mDragging;
     }
     public boolean isDragging(){
         return mDragging;
+    }
+    private DropTarget findDropTarget(int x, int y, int[] dropCoordinates) {
+        final Rect r = mRectTemp;
+
+        final ArrayList<DropTarget> dropTargets = mDropTargets;
+        final int count = dropTargets.size();
+        for (int i=count-1; i>=0; i--) {
+            DropTarget target = dropTargets.get(i);
+            if (!target.isDropEnabled())
+                continue;
+
+            target.getHitRectRelativeToDragLayer(r);
+
+            mDragObject.x = x;
+            mDragObject.y = y;
+            if (r.contains(x, y)) {
+
+                dropCoordinates[0] = x;
+                dropCoordinates[1] = y;
+                return target;
+            }
+        }
+        return null;
     }
     /**
      * This only gets called as a result of drag view cleanup being deferred in endDrag();
@@ -193,7 +246,7 @@ public class DragController {
         if (mDragging) {
             mDragObject.cancelled = true;
             mDragObject.dragComplete = true;
-            mDragObject.dragSource.onDropCompleted(null, mDragObject, false, false);
+            mDragObject.dragSource.onDropCompleted(null, mDragObject, false);
         }
         endDrag();
     }
@@ -225,5 +278,11 @@ public class DragController {
     }
     public DragView getDragView(){
         return mDragObject.dragView;
+    }
+    public interface DragListener {
+
+        void onDragStart(DragSource source, Object info, int dragAction);
+
+        void onDragEnd();
     }
 }

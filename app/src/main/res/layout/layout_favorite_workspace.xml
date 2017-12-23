@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.zibuyuqing.ucbrowser.widget.favorite.DragLayer
+<com.zibuyuqing.ucbrowser.widget.favorite.FavoriteWorkspace
     xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-    android:background="@color/themeBlue"
     android:layout_height="match_parent">
     <ScrollView
         android:id="@+id/contentWrapper"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="400dp">
         <com.zibuyuqing.ucbrowser.widget.favorite.CellLayout
             android:id="@+id/content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
         </com.zibuyuqing.ucbrowser.widget.favorite.CellLayout>
     </ScrollView>
-</com.zibuyuqing.ucbrowser.widget.favorite.DragLayer>
+</com.zibuyuqing.ucbrowser.widget.favorite.FavoriteWorkspace>

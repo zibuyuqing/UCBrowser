@@ -3,9 +3,12 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/rvFavoriteList"
+    <com.zibuyuqing.ucbrowser.widget.favorite.DragLayer
         android:layout_width="match_parent"
+        android:id="@+id/dragLayer"
         android:layout_height="match_parent">
-    </android.support.v7.widget.RecyclerView>
+        <include
+            android:id="@+id/favoriteWorkspace"
+            layout="@layout/layout_favorite_workspace"/>
+    </com.zibuyuqing.ucbrowser.widget.favorite.DragLayer>
 </LinearLayout>

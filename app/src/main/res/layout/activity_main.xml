@@ -34,7 +34,11 @@
             android:id="@+id/llUCBottomBar"
             layout="@layout/layout_uc_bottom_bar">
         </include>
-    </com.zibuyuqing.ucbrowser.widget.root.UCRootView>
 
+    </com.zibuyuqing.ucbrowser.widget.root.UCRootView>
+    <include
+        android:visibility="gone"
+        layout="@layout/layout_uc_favorite">
+    </include>
 </FrameLayout>
 

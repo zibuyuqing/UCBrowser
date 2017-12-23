@@ -21,4 +21,5 @@ public class FavoriteFolderIcon extends FavoriteItemView{
     public FavoriteFolderIcon(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
+
 }
