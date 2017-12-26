@@ -1,8 +1,5 @@
 package com.zibuyuqing.ucbrowser;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
@@ -14,7 +11,6 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.stackview.widget.UCStackView;
@@ -37,24 +33,8 @@ import com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
 import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
-
-import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Cancellable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack, UCStackView.OnChildDismissedListener {
     private static final String TAG = "MainActivity";
@@ -62,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private UCHeadLayout mUCHeadLayout;// 头部
     private UCNewsLayout mUCNewsLayout;//新闻列表
     private UCBottomBar mUCBottomBar; // 底部菜单
+    private BaseLayout mUCFavorite; // 收藏页
     private BezierLayout mBezierLayout;
     private UCRootView mUCRootView;
     private ViewPager mNewsPager;
@@ -79,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private List<UCPager> mPagers = new ArrayList<>();
     private List<Integer> mPagerIds = new ArrayList<>();
     private int mSelectPager = 0;
+    private boolean mPagersManagerUIShown = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,24 +107,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         );
         mUCBottomBar = (UCBottomBar)findViewById(R.id.llUCBottomBar);
         mBezierLayout = (BezierLayout)findViewById(R.id.llBezierLayout);
-        mUCRootView = (UCRootView) findViewById(R.id.ucRootView);
-        mUCRootView.attachScrollStateListener(mTopSearchBar);
-        mUCRootView.attachScrollStateListener(mUCHeadLayout);
-        mUCRootView.attachScrollStateListener(mUCNewsLayout);
-        mUCRootView.attachScrollStateListener(mUCBottomBar);
-        mUCRootView.attachScrollStateListener(mBezierLayout);
-        mUCRootView.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        mUCNewsLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        mUCRootView.setFinalDistance(
-                                ViewUtil.getScreenSize(MainActivity.this).x,
-                                mUCHeadLayout.getMeasuredHeight()
-                        );
-                    }
-                }
-        );
         mNewsPager = (ViewPager) mUCNewsLayout.findViewById(R.id.vpUCNewsPager);
         mNewsTab = (TabLayout) mUCNewsLayout.findViewById(R.id.tlUCNewsTab);
 
@@ -158,7 +122,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDragController = new DragController(this,mDragLayer);
         mDragLayer.setup(mDragController);
         mWorkspace.setup(mDragLayer);
+
+        mUCFavorite = (BaseLayout) findViewById(R.id.ucFavorite);
+        mUCFavorite.setTransXEnable(true);
+        mUCFavorite.initTranslationX(ViewUtil.getScreenSize(this).x, 0);
+
+        mUCRootView = (UCRootView) findViewById(R.id.ucRootView);
+        mUCRootView.attachScrollStateListener(mTopSearchBar);
+        mUCRootView.attachScrollStateListener(mUCHeadLayout);
+        mUCRootView.attachScrollStateListener(mUCNewsLayout);
+        mUCRootView.attachScrollStateListener(mUCBottomBar);
+        mUCRootView.attachScrollStateListener(mBezierLayout);
+        mUCRootView.attachScrollStateListener(mUCFavorite);
+        mUCRootView.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        mUCNewsLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        mUCRootView.setFinalDistance(
+                                ViewUtil.getScreenSize(MainActivity.this).x,
+                                mUCHeadLayout.getMeasuredHeight()
+                        );
+                    }
+                }
+        );
         mDragController.addDropTarget(mWorkspace);
+        mDragController.addDragListener(mUCRootView);
         findViewById(R.id.flWindowsNum).setOnClickListener(this);
         findViewById(R.id.tvBack).setOnClickListener(this);
         findViewById(R.id.ivHome).setOnClickListener(this);
@@ -168,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     private void bindFavoriteItems(){
         ArrayList<ItemInfo> infos = new ArrayList<>();
-        for(int i = 0; i < 32; i ++){
+        for(int i = 0; i < 24; i ++){
             infos.add(buildFavoriteShortcutItem());
         }
         mWorkspace.bindItems(infos);
@@ -186,14 +175,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean isAnimating(){
         return mUCRootView.isAnimating() || mUCStackView.isAnimating();
     }
-//    @Override
-//    public boolean dispatchTouchEvent(MotionEvent ev) {
-//        Log.e(TAG,"dispatchTouchEvent ::isAnimating =: " +isAnimating());
-//        if(isAnimating()){
-//            return false;
-//        }
-//        return super.dispatchTouchEvent(ev);
-//    }
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        Log.e(TAG,"dispatchTouchEvent ::isAnimating =: " +isAnimating());
+        if(isAnimating()){
+            return false;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
 
     /**
      * 重写back键逻辑
@@ -202,13 +191,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onBackPressed() {
         if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
             mUCRootView.back2Normal();
-        } else if(mUCRootView.getMode() == UCRootView.WEBSITE_MODE){
+        } else if(mUCRootView.getMode() == UCRootView.FAVORITE_MODE){
             mUCRootView.back2Home();
+        } else if(mPagersManagerUIShown){
+            hidePagers(true);
         } else {
             super.onBackPressed();
         }
     }
-
+    /**
+     * 更新视图
+     */
+    private void refreshPages(){
+        int count = mPagers.size();
+        int olderSelect = mSelectPager;
+        if(count > 0){
+            mPagers.clear();
+            for(int i = 0; i < count; i++){
+                mPagers.add(buildUCPager());
+            }
+        }
+        mSelectPager = olderSelect;
+    }
     /**
      * 进入页面管理界面，用动画改变选择页（可以理解为一张截图）的Y和scale
      */
@@ -220,12 +224,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             addUCPager(false);
         }
         mPagersManagerLayout.setVisibility(View.VISIBLE);
+        refreshPages();
         mPagerAdapter.updateData(mPagers);
         getWindow().setStatusBarColor(getResources().getColor(R.color.pureBlack, null));
         mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,true, new Runnable() {
             @Override
             public void run() {
                 mUCRootView.setVisibility(View.GONE);
+                mPagersManagerUIShown = true;
             }
         });
     }
@@ -309,6 +315,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mUCBottomBar.setVisibility(View.VISIBLE);
             initWindow();
         }
+        mPagersManagerUIShown = false;
         mPagersNum.setText("" + pagerNum);
     }
 
@@ -367,7 +374,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         int index = mPagerIds.indexOf(key);
         mSelectPager = index;
-        mUCStackView.selectPager(index);
+        mUCStackView.selectPager(index, new Runnable() {
+            @Override
+            public void run() {
+                mUCRootView.setVisibility(View.VISIBLE);
+                mPagersManagerLayout.setVisibility(View.GONE);
+                initWindow();
+            }
+        });
         Log.e(TAG,"onSelect :: key =:" + key);
     }
 

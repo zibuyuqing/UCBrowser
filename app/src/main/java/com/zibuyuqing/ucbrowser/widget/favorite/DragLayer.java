@@ -370,6 +370,7 @@ public class DragLayer extends FrameLayout {
                 mDropView.setTranslationY(yPos);
                 mDropView.setScaleX(scaleX);
                 mDropView.setScaleY(scaleY);
+                Log.e(TAG,"mDropView xPos =:" + xPos +",yPos =:" + yPos +",scaleX =:" + scaleX +",scaleY =:" + scaleY);
             }
         };
         animateView(view, updateCb, duration, onCompleteRunnable,anchorView);

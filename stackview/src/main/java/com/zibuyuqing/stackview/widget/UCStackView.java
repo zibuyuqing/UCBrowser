@@ -311,16 +311,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
      * 当点击某一页面时，代表选择了这个页面，然后把UCRootView动画展示出来
      * @param key 页面的ID
      */
-    public void selectPager(int key){
+    public void selectPager(int key,Runnable onComplete){
         mSelectPager = key;
-        animateShow(mSelectPager, mPreviousView, mTargetView, false, new Runnable() {
-            @Override
-            public void run() {
-                mTargetView.setVisibility(GONE);
-                mPreviousView.setVisibility(VISIBLE);
-            }
-        });
-        Toast.makeText(mContext, "点击第" + mSelectPager +" 项", Toast.LENGTH_SHORT).show();
+        animateShow(mSelectPager, mPreviousView, mTargetView, false,onComplete);
     }
 
     /**

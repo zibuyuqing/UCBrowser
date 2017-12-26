@@ -19,9 +19,9 @@ import android.widget.RelativeLayout;
 
 import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.R;
-import com.zibuyuqing.ucbrowser.model.bean.pager.UCPager;
+import com.zibuyuqing.ucbrowser.widget.favorite.DragController;
+import com.zibuyuqing.ucbrowser.widget.favorite.DragSource;
 
-import java.security.acl.LastOwnerException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,14 +29,14 @@ import java.util.List;
  * Created by Xijun.Wang on 2017/11/27.
  */
 
-public class UCRootView extends RelativeLayout {
+public class UCRootView extends RelativeLayout implements DragController.DragListener{
     private static final String TAG = "UCRootView";
     public static final int INVALID_POINTER = -1;
     private static final int FLING_SPEED = 50;
     private static final int MSG_FLING = 2222;
     public final static int NEWS_MODE = 3;
     public final static int NORMAL_MODE = 4;
-    public final static int WEBSITE_MODE = 5;
+    public final static int FAVORITE_MODE = 5;
     public final static int SCROLL_HORIZONTALLY = 5;
     public final static int SCROLL_VERTICALLY = 6;
     public final static int SCROLL_NONE = 0;
@@ -70,7 +70,7 @@ public class UCRootView extends RelativeLayout {
     private float mRate;
     private boolean mStartedScroll = false;
     private boolean mIsAnimating = false;
-
+    private boolean mIsDragging = false;
     public UCRootView(@NonNull Context context) {
         this(context, null);
     }
@@ -221,6 +221,10 @@ public class UCRootView extends RelativeLayout {
         if (getChildCount() < 0) {
             Log.e(TAG, "There are no children to scroll");
             return super.onInterceptTouchEvent(ev);
+        }
+        Log.e(TAG, "onInterceptTouchEvent :: mIsDragging =:" + mIsDragging);
+        if(mIsDragging){
+            return false;
         }
         final int action = ev.getAction();
         boolean wasScrolling = mIsScrolling ||
@@ -383,7 +387,7 @@ public class UCRootView extends RelativeLayout {
                 return mRate <= -1.0f;
             }
         } else if(mDirection == SCROLL_HORIZONTALLY){
-            if(mNextMode == WEBSITE_MODE){
+            if(mNextMode == FAVORITE_MODE){
                 return mRate <= -1.0f;
             }
         } else {
@@ -499,7 +503,7 @@ public class UCRootView extends RelativeLayout {
             case SCROLL_HORIZONTALLY:
                 if(Math.abs(mCurrentVelocity) > mMinimumVelocity){
                     if(mCurrentVelocity < 0){
-                        mNextMode = WEBSITE_MODE;
+                        mNextMode = FAVORITE_MODE;
                     } else {
                         mNextMode = NORMAL_MODE;
                     }
@@ -507,17 +511,17 @@ public class UCRootView extends RelativeLayout {
                     if(mCurrentMode == NORMAL_MODE){
                         if(fling) {
                             if (Math.abs(mTotalMotionX) > mFinalDistanceX * 0.4f) {
-                                mNextMode = WEBSITE_MODE;
+                                mNextMode = FAVORITE_MODE;
                             } else {
                                 mNextMode = NORMAL_MODE;
                             }
                         } else {
-                            mNextMode = WEBSITE_MODE;
+                            mNextMode = FAVORITE_MODE;
                         }
                     } else {
                         if(fling) {
                             if (Math.abs(mTotalMotionX) > mFinalDistanceX * 0.8f) {
-                                mNextMode = WEBSITE_MODE;
+                                mNextMode = FAVORITE_MODE;
                             } else {
                                 mNextMode = NORMAL_MODE;
                             }
@@ -584,7 +588,7 @@ public class UCRootView extends RelativeLayout {
         mDirection = SCROLL_HORIZONTALLY;
         Log.e(TAG,"back2Home :: mCurrentMode =:" + mCurrentMode);
         if(mCurrentMode == NORMAL_MODE){
-            mNextMode = WEBSITE_MODE;
+            mNextMode = FAVORITE_MODE;
         } else {
             mNextMode = NORMAL_MODE;
         }
@@ -622,7 +626,7 @@ public class UCRootView extends RelativeLayout {
             case NEWS_MODE :
                 positiveRate = -1.0f;
                 break;
-            case WEBSITE_MODE:
+            case FAVORITE_MODE:
                 positiveRate = -1.0f;
                 break;
             case NORMAL_MODE:
@@ -631,6 +635,16 @@ public class UCRootView extends RelativeLayout {
             default:break;
         }
         return positiveRate;
+    }
+
+    @Override
+    public void onDragStart(DragSource source, Object info, int dragAction) {
+        mIsDragging = true;
+    }
+
+    @Override
+    public void onDragEnd() {
+        mIsDragging = false;
     }
 
     public interface ScrollStateListener {

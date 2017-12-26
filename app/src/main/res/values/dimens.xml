@@ -7,6 +7,7 @@
     <dimen name="dimen_64dp">64dp</dimen>
     <dimen name="dimen_72dp">72dp</dimen>
     <dimen name="dimen_96dp">96dp</dimen>
+    <dimen name="dimen_112dp">120dp</dimen>
     <dimen name="bezier_layout_height">190dp</dimen>
     <dimen name="uc_head_layout_height">310dp</dimen>
 </resources>

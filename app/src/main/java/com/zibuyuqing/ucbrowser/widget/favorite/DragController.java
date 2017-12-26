@@ -27,7 +27,6 @@ public class DragController {
     private ArrayList<DropTarget> mDropTargets = new ArrayList<DropTarget>();
     private ArrayList<DragListener> mListeners = new ArrayList<DragListener>();
     private Context mContext;
-
     private int mLastTouch[] = new int[2];
     private int mTmpPoint[] = new int[2];
     private DragLayer mDragLayer;
@@ -45,8 +44,17 @@ public class DragController {
             mDropTargets.add(target);
         }
     }
+
     public void removeDropTarget(DropTarget target){
         mDropTargets.remove(target);
+    }
+    public void addDragListener(DragListener listener){
+        if(!mListeners.contains(listener)){
+            mListeners.add(listener);
+        }
+    }
+    public void removeDragListener(DragListener listener){
+            mListeners.remove(listener);
     }
     public DragView startDrag(
             Bitmap b,
@@ -165,14 +173,20 @@ public class DragController {
     }
 
     private void handleMoveEvent(int x, int y) {
-        mDragObject.dragView.move(x, y);
+
 
         // Drop on someone?
         final int[] coordinates = mCoordinatesTemp;
         DropTarget dropTarget = findDropTarget(x, y, coordinates);
         checkTouchMove(dropTarget);
         mDragObject.x = coordinates[0];
-        mDragObject.y = coordinates[1];
+        if(dropTarget instanceof FavoriteWorkspace) {
+            FavoriteWorkspace workspace = (FavoriteWorkspace) dropTarget;
+            mDragObject.y = coordinates[1] - workspace.getScrollOffsetY();
+        } else {
+            mDragObject.y = coordinates[1];
+        }
+        mDragObject.dragView.move(mDragObject.x, mDragObject.y);
 
         Log.e(TAG, "handleMoveEvent: x = " + x + ", y = " + y
                 + ", dragView = " + mDragObject.dragView + ", dragX = "
@@ -221,7 +235,6 @@ public class DragController {
             mDragObject.x = x;
             mDragObject.y = y;
             if (r.contains(x, y)) {
-
                 dropCoordinates[0] = x;
                 dropCoordinates[1] = y;
                 return target;
@@ -252,10 +265,18 @@ public class DragController {
     }
     public void drop(float x,float y){
         final int[] coordinates = mCoordinatesTemp;
+        final DropTarget dropTarget = findDropTarget((int) x, (int) y, coordinates);
         mDragObject.x = coordinates[0];
         mDragObject.y = coordinates[1];
+        boolean accepted = false;
+        if (dropTarget != null) {
+            mDragObject.dragComplete = true;
+            dropTarget.onDragExit(mDragObject);
+            dropTarget.onDrop(mDragObject);
+            accepted = true;
+        }
         mDragObject.dragComplete = true;
-        // mDragObject.dragSource.onDropCompleted((View) dropTarget, mDragObject, false, accepted);
+        mDragObject.dragSource.onDropCompleted((View) dropTarget, mDragObject, accepted);
     }
     private void endDrag(){
         Log.e(TAG,"cancelDrag endDrag = :" +mDragging);
@@ -265,6 +286,9 @@ public class DragController {
                 mDragObject.dragView.remove();
             }
             mDragObject.dragView = null;
+        }
+        for (DragListener listener : mListeners) {
+            listener.onDragEnd();
         }
     }
     /**
@@ -279,6 +303,8 @@ public class DragController {
     public DragView getDragView(){
         return mDragObject.dragView;
     }
+
+
     public interface DragListener {
 
         void onDragStart(DragSource source, Object info, int dragAction);

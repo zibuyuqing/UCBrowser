@@ -14,8 +14,11 @@ import android.graphics.RectF;
 import android.graphics.Region;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
 import com.zibuyuqing.ucbrowser.R;
@@ -99,7 +102,18 @@ public class CellLayout extends ViewGroup {
         mCellHeight = height;
         requestLayout();
     }
+    void onDropChild(View child) {
+        if (child != null) {
+            LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            child.requestLayout();
+            // #ifdef LAVA_EDIT
+            // wangxijun. 2017/6/2, Descrition
+            markCellsAsOccupiedForView(child);
+            lp.isLockedToGrid = true;
+            // #endif
 
+        }
+    }
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int count = getChildCount();
@@ -186,7 +200,7 @@ public class CellLayout extends ViewGroup {
         float delayAmount = START_VIEW_REORDER_DELAY;
         int startPos, endPos;
         int moveStart, moveEnd;
-        int direction;
+        int direction = 0;
 
         if (target == empty) {
             // No animation
@@ -197,8 +211,8 @@ public class CellLayout extends ViewGroup {
             // The items will move forward.
             direction = -1;
         }
-        moveStart = empty;
-        moveEnd = target;
+        moveStart = -1;
+        moveEnd = -1;
         startPos = empty;
         endPos = target;
         // Instant moving views.
@@ -338,17 +352,30 @@ public class CellLayout extends ViewGroup {
     public boolean animateChildToPosition(final View child, int cellX, int cellY, int duration,
                                           int delay, boolean permanent, boolean adjustOccupied) {
         if(indexOfChild(child) != -1) {
+            boolean[][] occupied = mOccupied;
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();
             final ItemInfo info = (ItemInfo) child.getTag();
             final int oldX = lp.x;
             final int oldY = lp.y;
+            if (adjustOccupied) {
+                occupied[lp.cellX][lp.cellY] = false;
+                occupied[cellX][cellY] = true;
+            }
+            lp.isLockedToGrid = true;
             lp.cellX = info.cellX = cellX;
             lp.cellY = info.cellY = cellY;
+
             setupLp(lp);
+            lp.isLockedToGrid = false;
             final int newX = lp.x;
             final int newY = lp.y;
             lp.x = oldX;
             lp.y = oldY;
+            // Exit early if we're not actually moving the view
+            if (oldX == newX && oldY == newY) {
+                lp.isLockedToGrid = true;
+                return true;
+            }
             Log.e(TAG, "animateChildToPosition cellX =:" + cellX + ",cellY= :" + cellY + ",oldX =:" + oldX +",newX =:" + newX);
 
             ValueAnimator va = AnimUtil.ofFloat(child, 0f, 1f);
@@ -371,6 +398,7 @@ public class CellLayout extends ViewGroup {
                     // has interrupted this one, and we don't want to lock the item into
                     // place just yet.
                     if (!cancelled) {
+                        lp.isLockedToGrid = true;
                         child.requestLayout();
                     }
                     Log.e(TAG, "animateChildToPosition onAnimationEnd:");
@@ -387,7 +415,6 @@ public class CellLayout extends ViewGroup {
         }
         return false;
     }
-
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int count = getChildCount();
@@ -425,7 +452,7 @@ public class CellLayout extends ViewGroup {
         public int cellY;
         public int x;
         public int y;
-
+        public boolean isLockedToGrid = true;
         public LayoutParams(Context c, AttributeSet attrs) {
             super(c, attrs);
         }
@@ -447,10 +474,12 @@ public class CellLayout extends ViewGroup {
         }
 
         public void setup(int cellWidth, int cellHeight) {
-            width = cellWidth;
-            height = cellHeight;
-            x = cellX * cellWidth + leftMargin;
-            y = cellY * cellHeight + topMargin;
+            if (isLockedToGrid) {
+                width = cellWidth;
+                height = cellHeight;
+                x = cellX * cellWidth + leftMargin;
+                y = cellY * cellHeight + topMargin;
+            }
         }
 
         @Override

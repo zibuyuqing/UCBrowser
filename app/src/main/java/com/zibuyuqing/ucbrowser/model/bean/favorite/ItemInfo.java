@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 public class ItemInfo {
     public Bitmap icon;
     public String description;
-    public String url;
     public int cellX;
     public int cellY;
     /**
@@ -32,14 +31,6 @@ public class ItemInfo {
         this.description = description;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
     public int getCellX() {
         return cellX;
     }
@@ -60,6 +51,6 @@ public class ItemInfo {
     public String toString() {
         return "ItemInfo ( " +
                 "cellX = :" + cellX + ",cellY =:" + cellY +",rank =:" + rank +
-                " ,des =:"+ description + ",url =:" + url + ",this =:" + this.hashCode() +")";
+                " ,des =:"+ description + ",this =:" + this.hashCode() +")";
     }
 }

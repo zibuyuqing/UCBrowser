@@ -2,6 +2,7 @@ package com.zibuyuqing.common.utils;
 
 import android.animation.Animator;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
@@ -9,6 +10,9 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.view.Display;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
 
@@ -39,5 +43,31 @@ public class ViewUtil {
         drawable.draw(canvas);
 
         return bitmap;
+    }
+    public static int getNavBarHeight(Context context) {
+        boolean hasMenuKey = ViewConfiguration.get(context).hasPermanentMenuKey();
+        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
+        boolean hasNavBar = !hasMenuKey && !hasBackKey;// 通过判断是否有虚拟菜单键和返回键来确定是否有导航栏
+
+        if (hasNavBar) {
+            boolean isPortrait = context.getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_PORTRAIT;
+
+            boolean isTablet = (context.getResources().getConfiguration().screenLayout
+                    & Configuration.SCREENLAYOUT_SIZE_MASK)
+                    >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+
+            String key = isPortrait ? "navigation_bar_height"
+                    : (isTablet ? "navigation_bar_height_landscape" : null);
+
+            return key == null ? 0 : getDimenSize(context, key);
+        } else {
+            return 0;
+        }
+    }
+    // 根据关键字获取对应的值
+    private static int getDimenSize(Context context, String key) {
+        int resourceId = context.getResources().getIdentifier(key, "dimen", "android");
+        return resourceId > 0 ? context.getResources().getDimensionPixelSize(resourceId) : 0;
     }
 }
