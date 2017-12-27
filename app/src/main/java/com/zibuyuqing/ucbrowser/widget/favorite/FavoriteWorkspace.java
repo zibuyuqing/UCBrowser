@@ -351,7 +351,6 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
         Log.e(TAG,"onMeasure contentHeight =:" + mContentAreaHeight +",mScrollAreaHeight =:" + mVisualAreaHeight);
         setMeasuredDimension(mVisualAreaWidth,mVisualAreaHeight);
     }
-
     private boolean isOverScroll(){
         return (mContent.getScrollY() + mVisualAreaHeight >= mContentAreaHeight) ||
                 (mContent.getScrollY() < 0);

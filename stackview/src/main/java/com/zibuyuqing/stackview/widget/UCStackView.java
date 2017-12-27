@@ -169,7 +169,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         float transY;
         float transZ;
         View child;
-        mChildTouchRect = new Rect[childCount];
+        mChildTouchRect = new Rect[childCount];// 子view的触控范围
         Log.e(TAG,"layoutChildren :: layoutChildren :: mLayoutState =:" + mLayoutState);
         for (int i = 0; i < childCount; i++) {
 
@@ -273,8 +273,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     /**
      * 计算view的TransY，首先根据参照进度，来算出各个view的偏移进度，然后偏移进度4次方来扩大差异
      * 最后在得出目标TransY
-     *
-     * @param i view 的位置
+     * mViewMinTop 为view最高能滑动到的地方
+     * mViewMaxTop 为view最低能滑动到的地方
+     * @param i view 的索引值
      * @param progress 参考进度
      */
     int calculateProgress2TransY(int i,float progress) {
@@ -288,6 +289,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     /**
      * 计算scale
+     * mViewMaxScale 为view最大scale
+     * mViewMinScale 为view最小的scale
      * @param i view 的位置
      * @param progress 参考进度
      */
@@ -522,22 +525,23 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             return false;
         }
         int action = ev.getAction();
-        // Pass through to swipe helper if we are swiping
+        // 如果是横向滑动，交由SwipeHelper处理
         mInterceptedBySwipeHelper = mSwipeHelper.onInterceptTouchEvent(ev);
         if (mInterceptedBySwipeHelper) {
             return true;
         }
+        // 如果我们的滑动动画在执行，标记为滑动
         boolean wasScrolling = mIsScrolling ||
                 (mScrollAnimator != null && mScrollAnimator.isRunning());
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
-                // Save the move down info
+                // 记录初始触摸点
                 mInitialMotionX = mLastMotionX = (int) ev.getX();
                 mInitialMotionY = mLastMotionY = (int) ev.getY();
                 mActivePointerId = ev.getPointerId(0);
-                // Stop the current doScroll if it is still flinging
+                // 如果已经在滚动，停止他
                 stopScroller();
-                // Initialize the velocity tracker
+                // 初始化速度追踪器
                 initOrResetVelocityTracker();
                 mVelocityTracker.addMovement(ev);
                 break;
@@ -548,7 +552,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 // Initialize the velocity tracker if necessary
                 initVelocityTrackerIfNotExists();
                 mVelocityTracker.addMovement(ev);
-
+                // 处理多指情况
                 int activePointerIndex = ev.findPointerIndex(mActivePointerId);
                 if (activePointerIndex < 0) {
                     Log.d(TAG, "findPointerIndex failed");
@@ -600,18 +604,19 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         initVelocityTrackerIfNotExists();
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
-                // Save the move down info
+                // 记录初始触摸点
                 mInitialMotionX = mLastMotionX = (int) ev.getX();
                 mInitialMotionY = mLastMotionY = (int) ev.getY();
                 mActivePointerId = ev.getPointerId(0);
-                // Stop the current doScroll if it is still flinging
+                // 如果已经在滚动，停止他
                 stopScroller();
-                // Initialize the velocity tracker
+                // 初始化速度追踪器
                 initOrResetVelocityTracker();
                 mVelocityTracker.addMovement(ev);
                 // Disallow parents from intercepting move events
                 break;
             }
+            //处理多指
             case MotionEvent.ACTION_POINTER_DOWN: {
                 final int index = ev.getActionIndex();
                 mActivePointerId = ev.getPointerId(index);
@@ -635,11 +640,14 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                     }
                 }
                 if (mIsScrolling) {
+                    // mTotalMotionY 就是我们滑动的总距离
                     if (isOverPositiveScrollP()) {
+                        // calculateDamping() 为计算阻尼的方法，即当overscroll时，实现越来越难滑的效果
                         mTotalMotionY -= deltaP *(calculateDamping());
                     } else {
                         mTotalMotionY -= deltaP;
                     }
+                    // 更新view
                     doScroll();
                 }
 
@@ -650,15 +658,19 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             case MotionEvent.ACTION_UP: {
                 mVelocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
                 int velocity = (int) mVelocityTracker.getYVelocity(mActivePointerId);
+                // 速度很大时，执行scroller.fling()方法，让界面跑一会儿
                 if (mIsScrolling && (Math.abs(velocity) > mMinimumVelocity)) {
                     fling(velocity);
                 } else {
+                    // 滑动到目标位置
                     scrollToPositivePosition();
                 }
+                // 重置滑动状态
                 resetTouchState();
                 Log.e(TAG, "onTouchEvent :: mIsOverScroll =:" + mIsOverScroll);
                 break;
             }
+            // 更新触控信息
             case MotionEvent.ACTION_POINTER_UP: {
                 int pointerIndex = ev.getActionIndex();
                 int pointerId = ev.getPointerId(pointerIndex);
@@ -697,7 +709,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     public void setScrollP(float progress) {
         Log.e(TAG, "rate =:" + progress);
-        mTotalMotionY = calculateProgress2Y(progress);
+        mTotalMotionY = calculateProgress2Y(progress);// 将progress转化为移动距离
         mScrollProgress = progress;
         layoutChildren();
     }
@@ -740,12 +752,17 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     void animateScroll(float curScroll, float newScroll, final Runnable postRunnable) {
         // Finish any current scrolling animations
         stopScroller();
+        // 根据属性“scrollP”定义滑动动画
         mScrollAnimator = ObjectAnimator.ofFloat(this, "scrollP", curScroll, newScroll);
+        //  动画时间
         mScrollAnimator.setDuration(mDuration);
+        // 插值器
         mScrollAnimator.setInterpolator(mLinearOutSlowInInterpolator);
         mScrollAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
+
+                // 更新 progress
                 setScrollP((Float) valueAnimator.getAnimatedValue());
             }
         });
@@ -768,10 +785,12 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         Log.e(TAG, "scrollToPositivePosition mScrollProgress =:" + mScrollProgress);
         float curScroll = getScrollP();
         float positiveScrollP = getPositiveScrollP();
+        // 当前progress和目标progress不一样时执行
         if(Float.compare(curScroll,positiveScrollP) != 0) {
             animateScroll(curScroll, getPositiveScrollP(), new Runnable() {
                 @Override
                 public void run() {
+                    // 动画结束后重置滑动状态
                     resetTouchState();
                 }
             });
@@ -797,8 +816,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     public void computeScroll() {
         Log.e(TAG, "computeScroll :: mIsOverScroll :" + mIsOverScroll);
         if (mScroller.computeScrollOffset()) {
-            Log.e(TAG, "computeScroll :111: mIsOverScroll :" + mIsOverScroll);
             if(mIsOverScroll){
+                // 如果 overscroll 滑动到指定位置
                 scrollToPositivePosition();
             } else {
                 if(mScroller.isFinished()){
@@ -812,7 +831,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     }
 
     /**
-     * 如果我们手指离开屏幕时滑动速度很快，让view飞一会
+     * 如果我们手指离开屏幕时滑动速度很快，让view飞一会，X方向忽略
      * @param velocity
      */
     public void fling(int velocity) {
@@ -927,8 +946,10 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     }
 
     public static abstract class Adapter<VH extends ViewHolder> {
+        // 被观察者
         private final AdapterDataObservable observable = new AdapterDataObservable();
 
+        // 创建view
         public VH createView(ViewGroup parent, int viewType) {
             VH holder = onCreateView(parent, viewType);
             holder.itemViewType = viewType;
@@ -937,12 +958,14 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
         protected abstract VH onCreateView(ViewGroup parent, int viewType);
 
+        // 绑定view
         public void bindViewHolder(VH holder, int position) {
             onBindViewHolder(holder, position);
         }
 
         protected abstract void onBindViewHolder(VH holder, int position);
 
+        // 获取item count
         public abstract int getItemCount();
 
         public final void notifyDataSetChanged() {
@@ -952,7 +975,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         public int getItemViewType(int position) {
             return 0;
         }
-
+        // 注册观察者
         public void registerObserver(AdapterDataObserver observer) {
             observable.registerObserver(observer);
         }
@@ -960,10 +983,11 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     }
 
     public static class AdapterDataObservable extends Observable<AdapterDataObserver> {
+        // mObservers 观察者集合
         public boolean hasObservers() {
             return !mObservers.isEmpty();
         }
-
+        // 通知各位观察者
         public void notifyDataChanged() {
             for (AdapterDataObserver observer : mObservers) {
                 observer.onChanged();

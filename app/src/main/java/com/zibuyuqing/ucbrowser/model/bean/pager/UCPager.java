@@ -8,7 +8,7 @@ import android.graphics.Bitmap;
 
 public class UCPager {
     private String title;
-    private int websiteIcon;
+    private int websiteIcon;//网站图标更合理的是在云端下载，为了方便，我先使用本地的
     private Bitmap pagerPreview;
     private int key;
     public UCPager(String title, int websiteIcon, Bitmap pagerPreview,int key) {

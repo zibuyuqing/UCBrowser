@@ -84,7 +84,7 @@ public class SwipeHelper {
     public void resetTranslation(View v) {
         setTranslation(v, 0);
     }
-
+    // mSwipeDirection 配置的拖动方向
     private float getPos(MotionEvent ev) {
         return mSwipeDirection == X ? ev.getX() : ev.getY();
     }
@@ -148,12 +148,13 @@ public class SwipeHelper {
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 mDragging = false;
-                mCurrView = mCallback.getChildAtPosition(ev);
+                mCurrView = mCallback.getChildAtPosition(ev);// 获取拖动的view
                 mVelocityTracker.clear();
                 if (mCurrView != null) {
+                    // 标记view是否可以消逝
                     mCanCurrViewBeDimissed = mCallback.canChildBeDismissed(mCurrView);
                     mVelocityTracker.addMovement(ev);
-                    mInitialTouchPos = getPos(ev);
+                    mInitialTouchPos = getPos(ev); // 根据配置获取位置
                 } else {
                     mCanCurrViewBeDimissed = false;
                 }
@@ -341,18 +342,18 @@ public class SwipeHelper {
         }
     }
     public interface Callback {
-        View getChildAtPosition(MotionEvent ev);
+        View getChildAtPosition(MotionEvent ev);// 获取拖动的view
 
-        boolean canChildBeDismissed(View v);
+        boolean canChildBeDismissed(View v); // view是否可以通过滑动消逝
 
-        void onBeginDrag(View v);
+        void onBeginDrag(View v);// 开始拖动
 
-        void onSwipeChanged(View v, float delta);
+        void onSwipeChanged(View v, float delta);// 拖动过程中通知监听者进度
 
-        void onChildDismissed(View v);
+        void onChildDismissed(View v); // view 消逝后调用
 
-        void onSnapBackCompleted(View v);
+        void onSnapBackCompleted(View v); // 如果view没有消逝而是回到初始位置，调用这个
 
-        void onDragCancelled(View v);
+        void onDragCancelled(View v); // 拖动取消
     }
 }
