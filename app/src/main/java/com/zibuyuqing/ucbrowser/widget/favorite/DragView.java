@@ -25,7 +25,7 @@ public class DragView extends View{
     private float mOffsetX;
     private float mOffsetY;
     private Rect mDragRegion = null;
-    private Bitmap mBitmap;
+    public Bitmap mBitmap;
     ValueAnimator mAnim;
     private Point mDragVisualizeOffset = null;
     private boolean mHasDrawn = false;

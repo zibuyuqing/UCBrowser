@@ -1,5 +1,6 @@
 package com.zibuyuqing.ucbrowser;
 
+import android.content.pm.ShortcutInfo;
 import android.graphics.Bitmap;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
@@ -18,6 +19,7 @@ import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
+import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteFolderInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteShortcutInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
 import com.zibuyuqing.ucbrowser.model.bean.pager.UCPager;
@@ -157,13 +159,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     private void bindFavoriteItems(){
         ArrayList<ItemInfo> infos = new ArrayList<>();
-        for(int i = 0; i < 24; i ++){
+        for(int i = 0; i < 10; i ++){
             infos.add(buildFavoriteShortcutItem());
         }
+        infos.addAll(bindFavoriteFolders());
         mWorkspace.bindItems(infos);
     }
+    private ArrayList<ItemInfo> bindFavoriteFolders(){
+        ArrayList<ItemInfo> folders = new ArrayList<>();
+        for(int i = 0; i < 3; i ++){
+            folders.add(buildFavoriteFolderItem());
+        }
+        return folders;
+    }
     private int mCurrentCount = 0;
-    private ItemInfo buildFavoriteShortcutItem(){
+    private FavoriteShortcutInfo buildFavoriteShortcutItem(){
         FavoriteShortcutInfo shortcutInfo = new FavoriteShortcutInfo();
         shortcutInfo.setIcon(ViewUtil.drawableToBitmap(getDrawable(R.drawable.ic_favorite_baidu)));
         shortcutInfo.cellX = shortcutInfo.cellY = shortcutInfo.rank = -1;
@@ -171,6 +181,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         shortcutInfo.setDescription("百度" + mCurrentCount);
         shortcutInfo.setUrl("http://baidu.com");
         return shortcutInfo;
+    }
+    private FavoriteFolderInfo buildFavoriteFolderItem(){
+        FavoriteFolderInfo info = new FavoriteFolderInfo();
+        for(int i = 0; i < 10; i ++){
+            info.addItem(buildFavoriteShortcutItem());
+        }
+        mCurrentCount ++ ;
+        info.setDescription("文件夹" + mCurrentCount);
+        info.setIcon(ViewUtil.drawableToBitmap(getDrawable(R.drawable.folder_bg)));
+        return info;
     }
     public boolean isAnimating(){
         return mUCRootView.isAnimating() || mUCStackView.isAnimating();

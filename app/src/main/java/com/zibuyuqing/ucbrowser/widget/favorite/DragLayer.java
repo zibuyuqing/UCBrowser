@@ -263,9 +263,9 @@ public class DragLayer extends FrameLayout {
                 }
             }
         };
-        CellLayout parentChildren = (CellLayout) child.getParent();
+        CellLayout parent = (CellLayout) child.getParent();
         CellLayout.LayoutParams lp = (CellLayout.LayoutParams) child.getLayoutParams();
-        parentChildren.measureChild(child);
+        parent.measureChild(child);
 
         Rect r = new Rect();
         getViewRectRelativeToSelf(dragView, r);
@@ -337,7 +337,7 @@ public class DragLayer extends FrameLayout {
                             final Runnable onCompleteRunnable, View anchorView) {
 
         if (duration < 0) {
-            duration = 500;
+            duration = 400;
         }
 
         // Animate the view
@@ -370,7 +370,6 @@ public class DragLayer extends FrameLayout {
                 mDropView.setTranslationY(yPos);
                 mDropView.setScaleX(scaleX);
                 mDropView.setScaleY(scaleY);
-                Log.e(TAG,"mDropView xPos =:" + xPos +",yPos =:" + yPos +",scaleX =:" + scaleX +",scaleY =:" + scaleY);
             }
         };
         animateView(view, updateCb, duration, onCompleteRunnable,anchorView);
@@ -382,7 +381,6 @@ public class DragLayer extends FrameLayout {
         mDropView = view;
         mDropView.cancelAnimation();
         mDropView.resetLayoutParams();
-
         // Set the anchor view if the page is scrolling
         if (anchorView != null) {
             mAnchorViewInitialScrollX = anchorView.getScrollX();
@@ -398,6 +396,15 @@ public class DragLayer extends FrameLayout {
             public void onAnimationEnd(Animator animation) {
                 if (onCompleteRunnable != null) {
                     onCompleteRunnable.run();
+                    clearAnimatedView();
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                if (onCompleteRunnable != null) {
+                    onCompleteRunnable.run();
+                    clearAnimatedView();
                 }
             }
         });

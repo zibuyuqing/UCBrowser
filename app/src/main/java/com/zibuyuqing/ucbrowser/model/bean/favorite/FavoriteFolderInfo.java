@@ -1,7 +1,5 @@
 package com.zibuyuqing.ucbrowser.model.bean.favorite;
 
-import android.content.pm.ShortcutInfo;
-
 import java.util.ArrayList;
 
 /**
@@ -9,19 +7,15 @@ import java.util.ArrayList;
  */
 
 public class FavoriteFolderInfo extends ItemInfo{
-    private ArrayList<ShortcutInfo> infos;
+    private ArrayList<FavoriteShortcutInfo> contents = new ArrayList<>();
 
-    public ArrayList<ShortcutInfo> getInfos() {
-        return infos;
+    public ArrayList<FavoriteShortcutInfo> getContents() {
+        return contents;
     }
-
-    public void setInfos(ArrayList<ShortcutInfo> infos) {
-        this.infos = infos;
+    public void addItem(FavoriteShortcutInfo info){
+        contents.add(info);
     }
-    public void addItem(ShortcutInfo info){
-        infos.add(info);
-    }
-    public void removeItem(ShortcutInfo info){
-        infos.remove(info);
+    public void removeItem(FavoriteShortcutInfo info){
+        contents.remove(info);
     }
 }

@@ -385,7 +385,7 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
 
     @Override
     public void onDragExit(DragObject dragObject) {
-
+        mReorderAlarm.cancelAlarm();
     }
 
     @Override

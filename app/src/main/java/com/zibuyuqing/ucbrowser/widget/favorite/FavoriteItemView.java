@@ -3,6 +3,7 @@ package com.zibuyuqing.ucbrowser.widget.favorite;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -10,6 +11,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.zibuyuqing.common.utils.*;
+import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
 
@@ -18,7 +21,7 @@ import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
  */
 
 public abstract class FavoriteItemView extends FrameLayout {
-    private static final String TAG ="FavoriteItemView";
+    public static final String TAG ="FavoriteItemView";
     protected Bitmap mIcon;
     protected int mIconSize;
     protected String mDescription;
@@ -27,6 +30,7 @@ public abstract class FavoriteItemView extends FrameLayout {
     protected ImageView ivIcon;
     protected TextView tvDescription;
     protected ItemInfo mInfo;
+    protected int mWidth;
     public FavoriteItemView(Context context) {
         this(context,null);
     }
@@ -41,16 +45,26 @@ public abstract class FavoriteItemView extends FrameLayout {
     }
 
     @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        drawOthers(canvas);
+    }
+
+    protected void drawOthers(Canvas canvas){
+
+    }
+    @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
         ivIcon = (ImageView) findViewById(R.id.ivIcon);
         tvDescription = (TextView)findViewById(R.id.tvDescription);
     }
 
-    private void init() {
+    protected void init() {
         mContext = getContext();
         mRes = getResources();
         mIconSize = mRes.getDimensionPixelSize(R.dimen.dimen_54dp);
+        mWidth = ViewUtil.getScreenSize(mContext).x / 4;
     }
 
 

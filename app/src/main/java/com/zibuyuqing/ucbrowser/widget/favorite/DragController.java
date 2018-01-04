@@ -282,9 +282,6 @@ public class DragController {
         Log.e(TAG,"cancelDrag endDrag = :" +mDragging);
         if(mDragging){
             mDragging = false;
-            if(mDragObject.dragView != null){
-                mDragObject.dragView.remove();
-            }
             mDragObject.dragView = null;
         }
         for (DragListener listener : mListeners) {
