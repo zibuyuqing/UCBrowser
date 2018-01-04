@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.stackview.widget.UCStackView;
@@ -27,6 +28,9 @@ import com.zibuyuqing.ucbrowser.ui.fragment.NewsListFragment;
 import com.zibuyuqing.ucbrowser.utils.Constants;
 import com.zibuyuqing.ucbrowser.widget.favorite.DragController;
 import com.zibuyuqing.ucbrowser.widget.favorite.DragLayer;
+import com.zibuyuqing.ucbrowser.widget.favorite.FavoriteFolder;
+import com.zibuyuqing.ucbrowser.widget.favorite.FavoriteFolderIcon;
+import com.zibuyuqing.ucbrowser.widget.favorite.FavoriteShortcut;
 import com.zibuyuqing.ucbrowser.widget.favorite.FavoriteWorkspace;
 import com.zibuyuqing.ucbrowser.widget.layout.BezierLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCBottomBar;
@@ -38,7 +42,7 @@ import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack, UCStackView.OnChildDismissedListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack, UCStackView.OnChildDismissedListener, FavoriteWorkspace.OnItemClickListener {
     private static final String TAG = "MainActivity";
     private BaseLayout mTopSearchBar;// 顶部搜索条
     private UCHeadLayout mUCHeadLayout;// 头部
@@ -63,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private List<Integer> mPagerIds = new ArrayList<>();
     private int mSelectPager = 0;
     private boolean mPagersManagerUIShown = false;
+    private boolean mFolderOpened = false;
+    private FavoriteFolder mOpenedFolder;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -124,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDragController = new DragController(this,mDragLayer);
         mDragLayer.setup(mDragController);
         mWorkspace.setup(mDragLayer);
-
+        mWorkspace.setOnItemClickListener(this);
         mUCFavorite = (BaseLayout) findViewById(R.id.ucFavorite);
         mUCFavorite.setTransXEnable(true);
         mUCFavorite.initTranslationX(ViewUtil.getScreenSize(this).x, 0);
@@ -209,6 +215,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     @Override
     public void onBackPressed() {
+        if(mFolderOpened){
+            if(mOpenedFolder != null){
+                mOpenedFolder.close();
+                mOpenedFolder = null;
+                mFolderOpened = false;
+            }
+            return;
+        }
         if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
             mUCRootView.back2Normal();
         } else if(mUCRootView.getMode() == UCRootView.FAVORITE_MODE){
@@ -356,7 +370,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void initWindow() {
         getWindow().setStatusBarColor(getResources().getColor(R.color.themeBlue, null));
     }
-
+    public void openFolder(FavoriteFolderIcon icon){
+        if(!mFolderOpened) {
+            FavoriteFolder folder = FavoriteFolder.fromXml(this);
+            folder.setup(mDragLayer);
+            folder.open(icon, true, null);
+            mFolderOpened = true;
+            mOpenedFolder = folder;
+        }
+    }
     @Override
     public void onClick(View view) {
         switch (view.getId()){
@@ -432,5 +454,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onChildDismissed(int index) {
         onUCPagerClosed(index);
+    }
+
+    @Override
+    public void onItemClick(View view) {
+        if(view instanceof FavoriteFolderIcon){
+            openFolder((FavoriteFolderIcon) view);
+        } else if(view instanceof FavoriteShortcut){
+            ItemInfo info = (ItemInfo) view.getTag();
+            Toast.makeText(MainActivity.this,info.description,Toast.LENGTH_SHORT).show();
+        }
     }
 }

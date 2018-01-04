@@ -67,7 +67,9 @@ public abstract class FavoriteItemView extends FrameLayout {
         mWidth = ViewUtil.getScreenSize(mContext).x / 4;
     }
 
-
+    public int getIconSize(){
+        return mIconSize;
+    }
     public void applyFromItemInfo(ItemInfo itemInfo){
         Log.e(TAG,"applyFromItemInfo itemInfo =:" + itemInfo);
         setTag(itemInfo);

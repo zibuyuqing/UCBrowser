@@ -38,8 +38,8 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     private static final int REORDER_DELAY = 250;
     private static final float ICON_OVERSCROLL_WIDTH_FACTOR = 0.45f;
     private static final int SCROLL_VELOCITY = 10;
-    private ScrollView mContentWrapper;
-    private CellLayout mContent;
+    public ScrollView mContentWrapper;
+    public CellLayout mContent;
     private ArrayList<ItemInfo> mInfos = new ArrayList<>();
     private final ArrayList<View> mItemsInReadingOrder = new ArrayList<View>();
     private static final Rect sTempRect = new Rect();
@@ -62,6 +62,7 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     private int mScreenWidth;
     private int mScreenHeight;
     private Bitmap mDragOutline = null;
+    private OnItemClickListener mListener;
     public FavoriteWorkspace(Context context) {
         this(context,null);
     }
@@ -74,11 +75,23 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
         super(context, attrs, defStyleAttr);
         init();
     }
-    public void bindItems(ArrayList<ItemInfo> infos){
-        mInfos = infos;
+    public void setOnItemClickListener(OnItemClickListener listener){
+        mListener = listener;
+    }
+    public void bindItems(ArrayList<? extends ItemInfo> infos){
+        mInfos.addAll(infos);
         ArrayList<View> icons = new ArrayList<View>();
         for(ItemInfo item : infos){
-            icons.add(createNewView(item));
+            View icon = createNewView(item);
+            icon.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(mListener != null) {
+                        mListener.onItemClick(view);
+                    }
+                }
+            });
+            icons.add(icon);
         }
         Log.e(TAG,"bindItems :: infos = " + infos.size() +",icons =:" + icons.size());
         arrangeChildren(icons, icons.size());
@@ -113,6 +126,14 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
         requestLayout();
     }
 
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        mContentWrapper = (ScrollView)findViewById(R.id.contentWrapper);
+        mContent = (CellLayout)findViewById(R.id.content);
+        Log.e(TAG," FavoriteWorkspace onSizeChanged ....................... mContent =：" + mContent+",mContentWrapper =:" + mContentWrapper);
+    }
+
     private void init() {
         mContext = getContext();
         mResources = mContext.getResources();
@@ -137,12 +158,18 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
         int cellHeight = (int) (5 * cellWidth * 0.25f);
         mContent.setCellDimensions(cellWidth,cellHeight);
     }
-
+    public DragLayer getDragLayer(){
+        return mDragLayer;
+    }
+    public DragController getDragController(){
+        return mDragController;
+    }
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mContentWrapper = (ScrollView) findViewById(R.id.contentWrapper);
-        mContent = (CellLayout) findViewById(R.id.content);
+        mContentWrapper = (ScrollView)findViewById(R.id.contentWrapper);
+        mContent = (CellLayout)findViewById(R.id.content);
+        Log.e(TAG," FavoriteWorkspace onFinishInflate ....................... mContent =：" + mContent+",mContentWrapper =:" + mContentWrapper);
     }
 
     private Bitmap createDragBitmap(View child, AtomicInteger aPadding) {
@@ -180,8 +207,6 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
         }
         return true;
     }
-
-
     public boolean onLongClick(View v){
         return beginDragShared(v);
     }
@@ -259,6 +284,10 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
             mEmptyCellRank = mTargetRank;
         }
     };
+    public void clearDragInfo() {
+        mCurrentDragInfo = null;
+        mCurrentDragView = null;
+    }
     public Bitmap createDragOutline(View child){
         child.setDrawingCacheEnabled(true);
         try {
@@ -406,5 +435,8 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     @Override
     public void onDropCompleted(View target, DragObject d, boolean success) {
         Log.e(TAG,"onDropCompleted :: --------------");
+    }
+    public interface OnItemClickListener {
+        void onItemClick(View view);
     }
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.zibuyuqing.ucbrowser.widget.favorite.FavoriteFolder
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@color/windowBg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <RelativeLayout
+        android:orientation="vertical"
+        android:id="@+id/folderHead"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dimen_64dp">
+        <EditText
+            android:id="@+id/folderName"
+            android:background="@drawable/folder_name_bg"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:textSize="@dimen/dimen_16dp"
+            android:text="购物"
+            android:layout_marginLeft="@dimen/dimen_64dp"
+            android:layout_marginRight="@dimen/dimen_64dp"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dimen_24dp" />
+    </RelativeLayout>
+    <include
+        android:id="@+id/folderContent"
+        layout="@layout/layout_favorite_workspace"></include>
+</com.zibuyuqing.ucbrowser.widget.favorite.FavoriteFolder>
