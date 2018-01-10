@@ -1,6 +1,5 @@
 package com.zibuyuqing.ucbrowser;
 
-import android.content.pm.ShortcutInfo;
 import android.graphics.Bitmap;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
@@ -195,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         mCurrentCount ++ ;
         info.setDescription("文件夹" + mCurrentCount);
-        info.setIcon(ViewUtil.drawableToBitmap(getDrawable(R.drawable.folder_bg)));
+        info.setIcon(ViewUtil.drawableToBitmap(getDrawable(R.drawable.folder_icon_bg)));
         return info;
     }
     public boolean isAnimating(){
@@ -215,12 +214,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     @Override
     public void onBackPressed() {
-        if(mFolderOpened){
-            if(mOpenedFolder != null){
-                mOpenedFolder.close();
-                mOpenedFolder = null;
-                mFolderOpened = false;
-            }
+        if(mOpenedFolder != null){
+            mOpenedFolder.close();
+            mOpenedFolder = null;
+            mFolderOpened = false;
             return;
         }
         if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
@@ -295,6 +292,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
     private void removeUCPager(int index){
+        if(mPagers.size() <=0 || index < 0 || index >= mPagers.size()){
+            return;
+        }
         mPagers.remove(index);
         mPagerIds.remove(index);
     }
@@ -430,7 +430,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClose(int key) {
         Log.e(TAG,"onClose :: key = :" + key);
-        if(!mPagerIds.contains(key)){
+        if(!mPagerIds.contains(key) || mUCStackView.isAnimating()){
             return;
         }
         Log.e(TAG,"onClose ::  start mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount() +",key =:" + key);
@@ -453,6 +453,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onChildDismissed(int index) {
+        Log.e(TAG,"onChildDismissed :: index =: " + index);
         onUCPagerClosed(index);
     }
 

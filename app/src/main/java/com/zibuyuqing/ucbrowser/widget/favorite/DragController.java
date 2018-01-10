@@ -3,13 +3,12 @@ package com.zibuyuqing.ucbrowser.widget.favorite;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
+
 import com.zibuyuqing.ucbrowser.widget.favorite.DropTarget.DragObject;
 import java.util.ArrayList;
 
@@ -179,18 +178,26 @@ public class DragController {
         final int[] coordinates = mCoordinatesTemp;
         DropTarget dropTarget = findDropTarget(x, y, coordinates);
         checkTouchMove(dropTarget);
-        mDragObject.x = coordinates[0];
+        int offsetY = 0;
         if(dropTarget instanceof FavoriteWorkspace) {
             FavoriteWorkspace workspace = (FavoriteWorkspace) dropTarget;
-            mDragObject.y = coordinates[1] - workspace.getScrollOffsetY();
+            mDragObject.x = coordinates[0];
+            mDragObject.y = coordinates[1] - workspace.getOffsetY();
+            offsetY = workspace.getOffsetY();
+        } else if (dropTarget instanceof FavoriteFolder){
+            FavoriteFolder folder = (FavoriteFolder) dropTarget;
+            mDragObject.x = coordinates[0] - folder.getOffsetX();
+            mDragObject.y = coordinates[1] - folder.getOffsetY();
+            offsetY = folder.getOffsetY();
         } else {
+            mDragObject.x = coordinates[0];
             mDragObject.y = coordinates[1];
         }
         mDragObject.dragView.move(mDragObject.x, mDragObject.y);
 
         Log.e(TAG, "handleMoveEvent: x = " + x + ", y = " + y
                 + ", dragView = " + mDragObject.dragView + ", dragX = "
-                + mDragObject.x + ", dragY = " + mDragObject.y);
+                + mDragObject.x + ", dragY = " + mDragObject.y +"\n" +",dropTarget =:" + dropTarget +",offsetY =:" + offsetY);
 
         // Check if we are hovering over the scroll areas
         mLastTouch[0] = x;

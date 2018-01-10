@@ -140,7 +140,6 @@ public class CellLayout extends ViewGroup {
     }
 
     public void markCellsAsUnoccupiedForView(View view) {
-        Log.e(TAG,"markCellsAsUnoccupiedForView ::-- ");
         LayoutParams lp = (LayoutParams) view.getLayoutParams();
         updateCellsOccupiedState(lp.cellX, lp.cellY, false);
     }
@@ -153,7 +152,6 @@ public class CellLayout extends ViewGroup {
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
             CellLayout.LayoutParams lp = (CellLayout.LayoutParams) child.getLayoutParams();
-            Log.e(TAG,"getChildAt :: x =:" + x +",y = :" + y +",lp.cellX =:" +lp.cellX +",lp.cellY =:" + lp.cellY);
             if ((lp.cellX == x)  && (lp.cellY == y)) {
                 return child;
             }
@@ -181,7 +179,6 @@ public class CellLayout extends ViewGroup {
         Log.e(TAG,"addViewToCellLayout ::.addView lp.cellX =:" + lp.cellX +",lp.cellY =:" + lp.cellY);
         if (lp.cellX >= 0 && lp.cellX <= mGridCountX - 1 && lp.cellY >= 0 && lp.cellY <= mGridCountY - 1) {
             try {
-                Log.e(TAG,"addViewToCellLayout ::.addView lp.x =:" + lp.x+",lp.cellX =:" + lp.cellX);
                 addView(child, index, lp);
                 if(markCells){
                     markCellsAsOccupiedForView(child);
@@ -201,7 +198,9 @@ public class CellLayout extends ViewGroup {
         int startPos, endPos;
         int moveStart, moveEnd;
         int direction = 0;
-
+        if(empty == -1){
+            return;
+        }
         if (target == empty) {
             // No animation
             return;
@@ -255,7 +254,6 @@ public class CellLayout extends ViewGroup {
         for (int i = startPos; i != endPos; i += direction) {
             int nextPos = i + direction;
             View v = getChildAt(nextPos % mGridCountX, nextPos / mGridCountX);
-            Log.e(TAG,"realTimeReorder :: nextPos :: " + nextPos +",nextPos % mGridCountX  =:" + nextPos % mGridCountX +",nextPos / mGridCountX =:" + nextPos / mGridCountX +",v=:" + v);
             if (v != null) {
                 ((ItemInfo) v.getTag()).rank -= direction;
             }
@@ -322,18 +320,15 @@ public class CellLayout extends ViewGroup {
                     bestXY[0] = x;
                     bestXY[1] = y;
                     bestRect.set(currentRect);
-                    Log.e(TAG, "findNearestArea :: bestXY[0] 2222" + bestXY[0] + ",distance =:" + distance + ",bestDistance =:" + bestDistance);
                 }
             }
         }
 
         // Return -1, -1 if no suitable location found
         if (bestDistance == Double.MAX_VALUE) {
-            Log.e(TAG,"findNearestArea :: bestXY[0] 3333" + bestXY[0]);
             bestXY[0] = -1;
             bestXY[1] = -1;
         }
-        Log.e(TAG,"findNearestArea :: bestXY[0]" + bestXY[0]);
         recycleTempRects(validRegions);
         return bestXY;
     }
@@ -421,7 +416,6 @@ public class CellLayout extends ViewGroup {
         int widthSpecSize = MeasureSpec.getSize(widthMeasureSpec);
         int heightSpecSize =  MeasureSpec.getSize(heightMeasureSpec);
         setMeasuredDimension(widthSpecSize, heightSpecSize);
-        Log.e(TAG,"onMeasure ============ count =:" + count);
         for (int i = 0; i < count; i++) {
             View child = getChildAt(i);
             if (child.getVisibility() != GONE) {

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="dimen_2dp">2dp</dimen>
     <dimen name="dimen_4dp">4dp</dimen>
     <dimen name="dimen_8dp">8dp</dimen>
     <dimen name="dimen_12dp">12dp</dimen>
@@ -11,7 +12,8 @@
     <dimen name="dimen_64dp">64dp</dimen>
     <dimen name="dimen_72dp">72dp</dimen>
     <dimen name="dimen_96dp">96dp</dimen>
-    <dimen name="dimen_112dp">120dp</dimen>
+    <dimen name="dimen_120dp">120dp</dimen>
+    <dimen name="dimen_180dp">180dp</dimen>
     <dimen name="bezier_layout_height">190dp</dimen>
     <dimen name="uc_head_layout_height">310dp</dimen>
     <dimen name="folder_icon_content_padding">4dp</dimen>

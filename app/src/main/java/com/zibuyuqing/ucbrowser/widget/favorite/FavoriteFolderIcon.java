@@ -58,7 +58,9 @@ public class FavoriteFolderIcon extends FavoriteItemView {
         mPaint.setStyle(Paint.Style.FILL);
         computePreviewDrawingParams();
     }
-
+    public ImageView getIconImageView(){
+        return ivIcon;
+    }
     @Override
     public void applyFromItemInfo(ItemInfo itemInfo) {
         mFolderInfo = (FavoriteFolderInfo) itemInfo;
@@ -87,7 +89,12 @@ public class FavoriteFolderIcon extends FavoriteItemView {
         super.dispatchDraw(canvas);
 
     }
-
+    public void hideText(){
+        tvDescription.setVisibility(GONE);
+    }
+    public void showText(){
+        tvDescription.setVisibility(VISIBLE);
+    }
     @Override
     protected void drawOthers(Canvas canvas) {
         super.drawOthers(canvas);
@@ -115,6 +122,12 @@ public class FavoriteFolderIcon extends FavoriteItemView {
     public float getPreviewItemPaddingTopToEdge() {
         return  mRes.getDimensionPixelSize(R.dimen.dimen_12dp) +
                 (getBackgroundWidth() - getBackgroundWidth() * mFinalCanvasScale) / 2;
+    }
+    public float getBackgroundLeftToEdge(){
+        return (mWidth - getBackgroundWidth()) / 2;
+    }
+    public float getBackgroundTopToEdge(){
+        return mRes.getDimensionPixelSize(R.dimen.dimen_12dp);
     }
     public float getPreviewItemPaddingLeftToEdge() {
         return (mWidth - getBackgroundWidth() +

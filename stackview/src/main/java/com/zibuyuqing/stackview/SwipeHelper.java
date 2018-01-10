@@ -147,6 +147,10 @@ public class SwipeHelper {
         Log.e(TAG,"onInterceptTouchEvent ::action =:" + action);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+                Log.e(TAG,"onInterceptTouchEvent ;; ev.getPointerCount() =:" + ev.getPointerCount());
+                if(ev.getPointerCount() < 1){
+                    return false;
+                }
                 mDragging = false;
                 mCurrView = mCallback.getChildAtPosition(ev);// 获取拖动的view
                 mVelocityTracker.clear();
@@ -214,6 +218,11 @@ public class SwipeHelper {
                 if (FADE_OUT_DURING_SWIPE && canAnimViewBeDismissed) {
                     view.setAlpha(1.f);
                 }
+            }
+
+            @Override
+            public void onAnimationStart(Animator animation) {
+                mCallback.onChildFling(view);
             }
         });
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -355,5 +364,7 @@ public class SwipeHelper {
         void onSnapBackCompleted(View v); // 如果view没有消逝而是回到初始位置，调用这个
 
         void onDragCancelled(View v); // 拖动取消
+
+        void onChildFling(View v); // view 在自己滚动时调用
     }
 }

@@ -333,7 +333,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
      */
     private float calculateDamping(){
         float damping = (1.0f - Math.abs(mScrollProgress - getPositiveScrollP()) * 5);
-        Log.e(TAG,"calculateDamping :: damping = :" + damping);
+        Log.d(TAG,"calculateDamping :: damping = :" + damping);
         return damping;
     }
 
@@ -481,14 +481,12 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mMaxScrollP = BASE_MAX_SCROLL_P;
         mMinPositiveScrollP = mMinScrollP + PROGRESS_STEP * 0.25f;
         mMaxPositiveScrollP = mMaxScrollP - PROGRESS_STEP * 0.75f;
-        Log.e(TAG,"updateScrollProgressRange ::mMinScrollP =:" + mMinScrollP +",mMaxScrollP =:" + mMaxScrollP);
     }
 
     /**
      * 初始化滑动进度
      */
     private void calculateInitialScrollP(){
-        Log.e(TAG,"calculateInitialScrollP:: ");
         updateScrollProgressRange();
         mScrollProgress = PROGRESS_START - mSelectPager * PROGRESS_STEP;
         mTotalMotionY = mScrollProgress * mViewMaxTop;
@@ -548,7 +546,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             }
             case MotionEvent.ACTION_MOVE: {
                 if (mActivePointerId == INVALID_POINTER) break;
-                Log.e(TAG, "onInterceptTouchEvent :: ACTION_MOVE = ");
                 // Initialize the velocity tracker if necessary
                 initVelocityTrackerIfNotExists();
                 mVelocityTracker.addMovement(ev);
@@ -587,7 +584,10 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 break;
             }
         }
-        return wasScrolling || mIsScrolling;
+        if(wasScrolling || mIsScrolling){
+            return true;
+        }
+        return super.onInterceptTouchEvent(ev);
     }
 
     @Override
@@ -626,7 +626,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             }
             case MotionEvent.ACTION_MOVE: {
                 if (mActivePointerId == INVALID_POINTER) break;
-                Log.e(TAG, "onTouchEvent :: ACTION_MOVE = ");
                 mVelocityTracker.addMovement(ev);
 
                 int activePointerIndex = ev.findPointerIndex(mActivePointerId);
@@ -667,7 +666,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 }
                 // 重置滑动状态
                 resetTouchState();
-                Log.e(TAG, "onTouchEvent :: mIsOverScroll =:" + mIsOverScroll);
+                Log.e(TAG, "onTouchEvent ACTION_UP :: mIsOverScroll =:" + mIsOverScroll);
                 break;
             }
             // 更新触控信息
@@ -690,7 +689,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 break;
             }
         }
-        return true;
+        return super.onTouchEvent(ev);
     }
 
     /**
@@ -846,19 +845,44 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 Integer.MAX_VALUE);
         invalidate();
     }
+    private boolean mIsDisallowIntercept = false;
+    @Override
+    public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+        // keep the info about if the innerViews do
+        // requestDisallowInterceptTouchEvent
+        mIsDisallowIntercept = disallowIntercept;
+        super.requestDisallowInterceptTouchEvent(disallowIntercept);
+    }
 
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        // the incorrect array size will only happen in the multi-touch
+        // scenario.
+        if (ev.getPointerCount() > 1 && mIsDisallowIntercept) {
+            requestDisallowInterceptTouchEvent(false);
+            boolean handled = super.dispatchTouchEvent(ev);
+            requestDisallowInterceptTouchEvent(true);
+            return handled;
+        } else {
+            return super.dispatchTouchEvent(ev);
+        }
+    }
     /**
      * 更具手指的位置判断触摸的是哪个view
      * @param event
      * @return
      */
     private View findChildAtPosition(MotionEvent event) {
+        if(event.getPointerCount() < 1){
+            return null;
+        }
         int activePointId = event.getPointerId(0);
         if(activePointId == INVALID_POINTER){
             return null;
         }
-        int x = (int) event.getX(activePointId);
-        int y = (int) event.getY(activePointId);
+        int activePointerIndex = event.findPointerIndex(activePointId);
+        int x = (int) event.getX(activePointerIndex);
+        int y = (int) event.getY(activePointerIndex);
         int count = getChildCount();
         for (int i = count - 1; i >= 0; i --) {
             if (mChildTouchRect[i].contains(x, y)) {
@@ -871,7 +895,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     @Override
     public View getChildAtPosition(MotionEvent ev) {
-
         return findChildAtPosition(ev);
     }
 
@@ -882,14 +905,17 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     @Override
     public void onBeginDrag(View v) {
-        Log.e(TAG, "onBeginDrag :: v =:" + v);
+        Log.d(TAG, "onBeginDrag :: v =:" + v);
     }
 
     @Override
     public void onSwipeChanged(View v, float delta) {
+        if(v == null){
+            return;
+        }
         float alpha = 1.f - Math.abs(delta) / mScreenWidth * 0.5f;
         alphaView(alpha, v);
-        Log.e(TAG, "onSwipeChanged :: delta =:" + delta);
+        Log.d(TAG, "onSwipeChanged :: delta =:" + delta);
     }
 
     @Override
@@ -904,7 +930,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
             newProgress = curProgress  + PROGRESS_STEP;
             mLayoutState = LAYOUT_PRE_ACTIVE;
         }
-
         animateScroll(curProgress, newProgress, new Runnable() {
             @Override
             public void run() {
@@ -917,6 +942,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 if(mListener != null){
                     mListener.onChildDismissed(mActivePager);
                 }
+                Log.e(TAG,"onChildDismissed ---------------------- mActivePager =:" + mActivePager);
                 mActivePager = INVALID_POSITION;
                 mIsAnimating = false;
             }
@@ -925,12 +951,17 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     @Override
     public void onSnapBackCompleted(View v) {
-
+        mIsAnimating = false;
     }
 
     @Override
     public void onDragCancelled(View v) {
+        mIsAnimating = false;
+    }
 
+    @Override
+    public void onChildFling(View v) {
+        mIsAnimating = true;
     }
 
     public Point getScreenSize(Context context) {

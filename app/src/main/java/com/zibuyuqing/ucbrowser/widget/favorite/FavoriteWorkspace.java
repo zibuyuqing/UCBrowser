@@ -14,7 +14,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -142,8 +141,8 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
         mScreenHeight = ViewUtil.getScreenSize(mContext).y;
         mVisualAreaWidth = mScreenWidth;
         mVisualAreaHeight = mScreenHeight -
-                ViewUtil.getNavBarHeight(mContext) - mResources.getDimensionPixelSize(R.dimen.dimen_112dp);
-        mContentAreaWidth = mScreenWidth;
+                ViewUtil.getNavBarHeight(mContext) - mResources.getDimensionPixelSize(R.dimen.dimen_120dp);
+        mContentAreaWidth = mVisualAreaWidth;
         mContentAreaHeight = mScreenHeight;
     }
 
@@ -206,6 +205,20 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
             beginDragShared(v, new Point(), this);
         }
         return true;
+    }
+
+    public void setVisualSize(int visualWidth, int visualHeight,boolean adaptDynamically) {
+        mVisualAreaWidth = visualWidth;
+        mContentAreaWidth = visualWidth;
+        int cellWidth = visualWidth / 4;
+        int cellHeight = (int) (5 * cellWidth * 0.25f);
+        if(!adaptDynamically){
+            mVisualAreaHeight = visualHeight;
+        } else {
+            mVisualAreaHeight = mInfos.size() > mContent.getCountX() ? cellHeight * 2 : cellHeight;
+        }
+        mContent.setCellDimensions(cellWidth,cellHeight);
+        requestLayout();
     }
     public boolean onLongClick(View v){
         return beginDragShared(v);
@@ -349,9 +362,14 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     @Override
     public void onDragEnter(DragObject dragObject) {
         Log.e(TAG,"onDragEnter :: d =:" + dragObject +",mTargetRank =:" + mTargetRank + ",mPrevTargetRank =:" + mPrevTargetRank);
-        mPrevTargetRank = -1;
+        if(dragObject.dragSource != this) {
+            mPrevTargetRank = -1;
+            mEmptyCellRank = -1;
+            mCurrentDragInfo = (ItemInfo) dragObject.dragInfo;
+            mCurrentDragView = createNewView(mCurrentDragInfo);
+        }
     }
-    public int getScrollOffsetY(){
+    public int getOffsetY(){
         return mContentWrapper.getScrollY();
     }
     public float getVisualAreaHeight() {
@@ -368,6 +386,12 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     }
     public float getVisualAreaWidth() {
         return mVisualAreaWidth;
+    }
+    public int getCellWidth(){
+        return mContent.getCellWidth();
+    }
+    public int getCellHeight(){
+        return mContent.getCellHeight();
     }
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -393,7 +417,7 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
             mReorderAlarm.setAlarm(REORDER_DELAY);
             mPrevTargetRank = mTargetRank;
         }
-        float y = r[1] - getScrollOffsetY();
+        float y = r[1] - getOffsetY();
         float cellOverlap = mContent.getCellHeight() * ICON_OVERSCROLL_WIDTH_FACTOR;
         boolean isOutsideTopEdge = y < cellOverlap;
         boolean isOutsideBottomEdge = y > (getVisualAreaHeight() - cellOverlap);
@@ -436,6 +460,8 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     public void onDropCompleted(View target, DragObject d, boolean success) {
         Log.e(TAG,"onDropCompleted :: --------------");
     }
+
+
     public interface OnItemClickListener {
         void onItemClick(View view);
     }
