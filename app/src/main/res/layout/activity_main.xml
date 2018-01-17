@@ -15,7 +15,7 @@
         android:layout_height="match_parent"
         android:background="@color/windowBg"
         android:orientation="vertical"
-        tools:context="com.zibuyuqing.ucbrowser.MainActivity">
+        tools:context="com.zibuyuqing.ucbrowser.ui.activity.HomeActivity">
         <include
             android:id="@+id/ucFavorite"
             layout="@layout/layout_uc_favorite">

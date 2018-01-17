@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    style="@style/NewsCardView"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
+    <!--app:cardCornerRadius="2dp"-->
+    <!--app:contentPadding="0dp"-->
+
+    <RelativeLayout
+        android:id="@+id/rl_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/ivNewsItemPhoto"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_centerVertical="true"
+            android:layout_margin="@dimen/dimen_8dp"
+            android:scaleType="centerCrop"
+            android:transitionName="@string/transition_photos"
+            tools:src="@mipmap/ic_launcher" />
+
+        <TextView
+            tools:ignore="RelativeOverlap"
+            android:id="@+id/tvNewsItemTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/ivNewsItemPhoto"
+            android:layout_marginRight="@dimen/dimen_8dp"
+            android:layout_toRightOf="@+id/ivNewsItemPhoto"
+            android:lines="2"
+            android:textSize="@dimen/font_normal"
+            tools:text="习近平:吹响建设科技强国号角国号角国号角"/>
+
+        <TextView
+            tools:ignore="RelativeOverlap"
+            android:id="@+id/tvNewsItemDigest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/tvNewsItemTitle"
+            android:layout_marginRight="@dimen/dimen_8dp"
+            android:layout_marginTop="2dp"
+            android:layout_toRightOf="@+id/ivNewsItemPhoto"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textSize="@dimen/font_small"
+            tools:text="科技是国之利器，中国人民生活要好，必须有强大科技。"/>
+
+        <TextView
+            tools:ignore="RelativeOverlap"
+            android:id="@+id/tvNewsItemPtime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/tvNewsItemDigest"
+            android:layout_marginBottom="4dp"
+            android:layout_marginRight="@dimen/dimen_8dp"
+            android:textSize="@dimen/font_tiny"
+            tools:text="05-28 20:09"/>
+
+    </RelativeLayout>
+
+</LinearLayout>

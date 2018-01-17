@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTarget, View.OnClickListener, View.OnLongClickListener, View.OnFocusChangeListener, View.OnKeyListener {
     private static final String TAG ="FavoriteWorkspace";
-    public static final int DRAG_BITMAP_PADDING = 2;
+
     private static final int REORDER_DELAY = 250;
     private static final float ICON_OVERSCROLL_WIDTH_FACTOR = 0.45f;
     private static final int SCROLL_VELOCITY = 10;
@@ -41,13 +41,11 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     public CellLayout mContent;
     private ArrayList<ItemInfo> mInfos = new ArrayList<>();
     private final ArrayList<View> mItemsInReadingOrder = new ArrayList<View>();
-    private static final Rect sTempRect = new Rect();
     private final int[] mTempXY = new int[2];
     private DragController mDragController;
     private DragLayer mDragLayer;
     private ItemInfo mCurrentDragInfo;
     private View mCurrentDragView;
-    private Canvas mCanvas = new Canvas();
     private int mTargetRank, mPrevTargetRank, mEmptyCellRank;
     private final Alarm mReorderAlarm = new Alarm();
     private Resources mResources;
@@ -171,42 +169,6 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
         Log.e(TAG," FavoriteWorkspace onFinishInflate ....................... mContent =：" + mContent+",mContentWrapper =:" + mContentWrapper);
     }
 
-    private Bitmap createDragBitmap(View child, AtomicInteger aPadding) {
-        int padding = aPadding.get();
-        Bitmap b = Bitmap.createBitmap(
-                child.getWidth() + padding,
-                child.getHeight() + padding,
-                Bitmap.Config.ARGB_8888);
-        mCanvas.setBitmap(b);
-        drawDragView(child,mCanvas,padding);
-        mCanvas.setBitmap(null);
-        return b;
-    }
-
-    private void drawDragView(View child, Canvas canvas, int padding) {
-        final Rect clipRect = sTempRect;
-        child.getDrawingRect(clipRect);
-        canvas.translate(-child.getScrollX() + padding / 2, -child.getScrollY() + padding / 2);
-        canvas.clipRect(clipRect, Region.Op.REPLACE);
-        child.draw(canvas);
-    }
-    private boolean beginDragShared(View v){
-        Object tag = v.getTag();
-        if(tag instanceof ItemInfo) {
-            if(!v.isInTouchMode()){
-                return false;
-            }
-            ItemInfo item = (ItemInfo) tag;
-            mCurrentDragInfo = item;
-            mEmptyCellRank = item.rank;
-            mCurrentDragView = v;
-            mContent.removeAndUnMakerView(mCurrentDragView);
-            mInfos.remove(item);
-            beginDragShared(v, new Point(), this);
-        }
-        return true;
-    }
-
     public void setVisualSize(int visualWidth, int visualHeight,boolean adaptDynamically) {
         mVisualAreaWidth = visualWidth;
         mContentAreaWidth = visualWidth;
@@ -223,30 +185,22 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     public boolean onLongClick(View v){
         return beginDragShared(v);
     }
-    public void beginDragShared(View child, Point relativeTouchPos,DragSource source){
-        child.clearFocus();
-        child.setPressed(false);
-        mDragOutline = createDragOutline(child);
-        AtomicInteger padding = new AtomicInteger(DRAG_BITMAP_PADDING);
-        final Bitmap b = createDragBitmap(child, padding);
-        final int bmpWidth = b.getWidth();
-        final int bmpHeight = b.getHeight();
-        float scale = mDragLayer.getLocationInDragLayer(child, mTempXY);
-        int dragLayerX = Math.round(mTempXY[0] -
-                (bmpWidth - scale * child.getWidth()) / 2);
-        int dragLayerY = Math.round(mTempXY[1] -
-                (bmpHeight - scale * bmpHeight) / 2 - padding.get() / 2);
-        Point dragVisualizeOffset = null;
-        Rect dragRect = null;
-        if(child instanceof FavoriteItemView){
-            dragVisualizeOffset = new Point(-padding.get() / 2,
-                    padding.get() / 2 - child.getPaddingTop());
-            dragRect = new Rect(0, child.getPaddingTop(), child.getWidth(), child.getHeight());
+    private boolean beginDragShared(View v){
+        Object tag = v.getTag();
+        if(tag instanceof ItemInfo) {
+            if(!v.isInTouchMode()){
+                return false;
+            }
+            ItemInfo item = (ItemInfo) tag;
+            mCurrentDragInfo = item;
+            mEmptyCellRank = item.rank;
+            mCurrentDragView = v;
+            mContent.removeAndUnMakerView(mCurrentDragView);
+            mInfos.remove(item);
+            mDragOutline = mDragLayer.createDragOutline(v);
+            mDragLayer.beginDragShared(v, new Point(),mTempXY,this);
         }
-        ItemInfo info = (ItemInfo) child.getTag();
-        getParent().requestDisallowInterceptTouchEvent(false);
-        mDragController.startDrag(b, dragLayerX, dragLayerY, source, info,
-                DragController.DRAG_ACTION_MOVE, dragVisualizeOffset, dragRect, scale);
+        return true;
     }
     public View createAndAddViewForRank(ItemInfo item, int rank) {
         View icon = createNewView(item);
@@ -300,20 +254,6 @@ public class FavoriteWorkspace extends LinearLayout implements DragSource,DropTa
     public void clearDragInfo() {
         mCurrentDragInfo = null;
         mCurrentDragView = null;
-    }
-    public Bitmap createDragOutline(View child){
-        child.setDrawingCacheEnabled(true);
-        try {
-            Bitmap bitmap = child.getDrawingCache();
-            mCanvas.setBitmap(bitmap);
-            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            paint.setAlpha(150);
-            mCanvas.drawRoundRect(new RectF(0,0,child.getWidth(),child.getHeight()),8,8,paint);
-            return bitmap;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 
     @Override

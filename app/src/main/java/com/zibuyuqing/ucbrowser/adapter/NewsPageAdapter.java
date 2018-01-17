@@ -4,7 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
-import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
+import com.zibuyuqing.ucbrowser.base.BaseFragment;
 
 import java.util.List;
 
@@ -17,8 +17,8 @@ import static com.zibuyuqing.ucbrowser.utils.Constants.NEWS_TITLE;
 
 public class NewsPageAdapter extends FragmentStatePagerAdapter {
 
-    List<BaseNewsFragment> mFragments;
-    public NewsPageAdapter(FragmentManager fm,List<BaseNewsFragment> fragments){
+    List<BaseFragment> mFragments;
+    public NewsPageAdapter(FragmentManager fm,List<BaseFragment> fragments){
         super(fm);
         mFragments = fragments;
     }

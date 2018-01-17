@@ -1,4 +1,4 @@
-package com.zibuyuqing.ucbrowser;
+package com.zibuyuqing.ucbrowser.ui.activity;
 
 import android.graphics.Bitmap;
 import android.support.design.widget.TabLayout;
@@ -15,10 +15,12 @@ import android.widget.Toast;
 
 import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.stackview.widget.UCStackView;
+import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
+import com.zibuyuqing.ucbrowser.base.BaseActivity;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
-import com.zibuyuqing.ucbrowser.base.BaseNewsFragment;
+import com.zibuyuqing.ucbrowser.base.BaseFragment;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteFolderInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteShortcutInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
@@ -41,48 +43,94 @@ import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, UCPagerView.CallBack, UCStackView.OnChildDismissedListener, FavoriteWorkspace.OnItemClickListener {
+import butterknife.BindView;
+
+public class HomeActivity extends BaseActivity implements View.OnClickListener, UCPagerView.CallBack,
+        UCStackView.OnChildDismissedListener, FavoriteWorkspace.OnItemClickListener {
     private static final String TAG = "MainActivity";
-    private BaseLayout mTopSearchBar;// 顶部搜索条
-    private UCHeadLayout mUCHeadLayout;// 头部
-    private UCNewsLayout mUCNewsLayout;//新闻列表
-    private UCBottomBar mUCBottomBar; // 底部菜单
-    private BaseLayout mUCFavorite; // 收藏页
-    private BezierLayout mBezierLayout;
-    private UCRootView mUCRootView;
-    private ViewPager mNewsPager;
-    private TabLayout mNewsTab;
-    private NewsPageAdapter mNewsPageAdapter;
-    private FrameLayout mPagersManagerLayout;
-    private UCStackView mUCStackView;
-    private UCPagerAdapter mPagerAdapter;
 
-    private DragLayer mDragLayer;
-    private FavoriteWorkspace mWorkspace;
-    private DragController mDragController;
 
-    private TextView mPagersNum;
+    // 头部
+    @BindView(R.id.llUCHeadLayout)
+    UCHeadLayout mUCHeadLayout;
+
+    //新闻列表
+    @BindView(R.id.llUCNewsListLayout)
+    UCNewsLayout mUCNewsLayout;
+
+    @BindView(R.id.tlUCNewsTab)
+    TabLayout mNewsTab;
+
+    @BindView(R.id.tvPagerNum)
+    TextView mPagersNum;
+
+    @BindView(R.id.flPagersManager)
+    FrameLayout mPagersManagerLayout;
+
+    @BindView(R.id.ucStackView)
+    UCStackView mUCStackView;
+
+    @BindView(R.id.dragLayer)
+    DragLayer mDragLayer;
+
+    @BindView(R.id.favoriteWorkspace)
+    FavoriteWorkspace mWorkspace;
+
+    @BindView(R.id.ucRootView)
+    UCRootView mUCRootView;
+
+    // 收藏页
+    @BindView(R.id.ucFavorite)
+    BaseLayout mUCFavorite;
+
+    // 底部菜单
+    @BindView(R.id.llUCBottomBar)
+    UCBottomBar mUCBottomBar;
+
+    @BindView(R.id.llBezierLayout)
+    BezierLayout mBezierLayout;
+
+    @BindView(R.id.vpUCNewsPager)
+    ViewPager mNewsPager;
+
+    // 顶部搜索条
+    @BindView(R.id.llTopSearchBar)
+    BaseLayout mTopSearchBar;
+
+
+    NewsPageAdapter mNewsPageAdapter;
+
+
+    UCPagerAdapter mPagerAdapter;
+
+
+
+    DragController mDragController;
+
+
     private List<UCPager> mPagers = new ArrayList<>();
     private List<Integer> mPagerIds = new ArrayList<>();
     private int mSelectPager = 0;
     private boolean mPagersManagerUIShown = false;
     private boolean mFolderOpened = false;
     private FavoriteFolder mOpenedFolder;
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    protected int layoutId() {
+        return R.layout.activity_main;
+    }
+
+    @Override
+    protected void init() {
         initWindow();
         initViews();
     }
 
     private void initViews() {
-        mUCHeadLayout = (UCHeadLayout) findViewById(R.id.llUCHeadLayout);
         mUCHeadLayout.setTransYEnable(true);
         mUCHeadLayout.setTransXEnable(true);
         mUCHeadLayout.initTranslationY(0, -100);
         mUCHeadLayout.initTranslationX(0, -ViewUtil.getScreenSize(this).x);
-        mTopSearchBar = (BaseLayout) findViewById(R.id.llTopSearchBar);
 
         //可移动
         mTopSearchBar.setTransYEnable(true);
@@ -99,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
         );
 
-        mUCNewsLayout = (UCNewsLayout) findViewById(R.id.llUCNewsListLayout);
+
         mUCNewsLayout.setTransYEnable(true);
         mUCNewsLayout.setTransXEnable(true);
         mUCNewsLayout.initTranslationX(0, -ViewUtil.getScreenSize(this).x);
@@ -112,29 +160,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
         );
-        mUCBottomBar = (UCBottomBar)findViewById(R.id.llUCBottomBar);
-        mBezierLayout = (BezierLayout)findViewById(R.id.llBezierLayout);
-        mNewsPager = (ViewPager) mUCNewsLayout.findViewById(R.id.vpUCNewsPager);
-        mNewsTab = (TabLayout) mUCNewsLayout.findViewById(R.id.tlUCNewsTab);
 
-        mPagersNum = (TextView)findViewById(R.id.tvPagerNum);
-
-        mPagersManagerLayout = (FrameLayout) findViewById(R.id.flPagersManager);
-        mUCStackView = (UCStackView)findViewById(R.id.ucStackView);
         mPagerAdapter = new UCPagerAdapter(this,this);
         mUCStackView.setAdapter(mPagerAdapter);
         mUCStackView.setOnChildDismissedListener(this);
-        mDragLayer = (DragLayer) findViewById(R.id.dragLayer);
-        mWorkspace = (FavoriteWorkspace) findViewById(R.id.favoriteWorkspace);
         mDragController = new DragController(this,mDragLayer);
         mDragLayer.setup(mDragController);
         mWorkspace.setup(mDragLayer);
         mWorkspace.setOnItemClickListener(this);
-        mUCFavorite = (BaseLayout) findViewById(R.id.ucFavorite);
+
         mUCFavorite.setTransXEnable(true);
         mUCFavorite.initTranslationX(ViewUtil.getScreenSize(this).x, 0);
 
-        mUCRootView = (UCRootView) findViewById(R.id.ucRootView);
         mUCRootView.attachScrollStateListener(mTopSearchBar);
         mUCRootView.attachScrollStateListener(mUCHeadLayout);
         mUCRootView.attachScrollStateListener(mUCNewsLayout);
@@ -147,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void onGlobalLayout() {
                         mUCNewsLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                         mUCRootView.setFinalDistance(
-                                ViewUtil.getScreenSize(MainActivity.this).x,
+                                ViewUtil.getScreenSize(HomeActivity.this).x,
                                 mUCHeadLayout.getMeasuredHeight()
                         );
                     }
@@ -155,10 +192,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         );
         mDragController.addDropTarget(mWorkspace);
         mDragController.addDragListener(mUCRootView);
+
         findViewById(R.id.flWindowsNum).setOnClickListener(this);
         findViewById(R.id.tvBack).setOnClickListener(this);
         findViewById(R.id.ivHome).setOnClickListener(this);
         findViewById(R.id.ivAddPager).setOnClickListener(this);
+
         bindNewsPage();
         bindFavoriteItems();
     }
@@ -354,7 +393,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void bindNewsPage() {
-        List<BaseNewsFragment> fragments = new ArrayList<>(Constants.NEWS_TITLE.length);
+        List<BaseFragment> fragments = new ArrayList<>(Constants.NEWS_TITLE.length);
         for(String title : Constants.NEWS_TITLE){
             NewsListFragment fragment = new NewsListFragment();
             Bundle bundle = new Bundle();
@@ -463,7 +502,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             openFolder((FavoriteFolderIcon) view);
         } else if(view instanceof FavoriteShortcut){
             ItemInfo info = (ItemInfo) view.getTag();
-            Toast.makeText(MainActivity.this,info.description,Toast.LENGTH_SHORT).show();
+            Toast.makeText(HomeActivity.this,info.description,Toast.LENGTH_SHORT).show();
         }
     }
 }

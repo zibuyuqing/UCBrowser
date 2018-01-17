@@ -5,16 +5,9 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <TextView
-        android:id="@+id/tvNewsTitle"
-        android:text="1"
-        android:gravity="center"
-        android:textSize="30dp"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-    <android.support.v7.widget.RecyclerView
-        android:visibility="gone"
+    <com.zibuyuqing.ucbrowser.widget.xrecyclerview.XRecyclerView
+        android:id="@+id/rvNewsList"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    </android.support.v7.widget.RecyclerView>
+    </com.zibuyuqing.ucbrowser.widget.xrecyclerview.XRecyclerView>
 </LinearLayout>

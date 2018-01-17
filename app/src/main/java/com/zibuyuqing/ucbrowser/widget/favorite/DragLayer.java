@@ -6,7 +6,13 @@ import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Region;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -18,11 +24,17 @@ import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 
+import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Created by xijun.wang on 2017/12/22.
  */
 
 public class DragLayer extends FrameLayout {
+
+    public static final int DRAG_BITMAP_PADDING = 2;
     private static final String TAG = "DragLayer";
     private final int[] mTmpXY = new int[2];
     private DragController mDragController;
@@ -32,6 +44,8 @@ public class DragLayer extends FrameLayout {
     private View mAnchorView;
     private int mAnchorViewInitialScrollX = 0;
     private ValueAnimator mDropAnim = null;
+    private static final Rect sTempRect = new Rect();
+    private Canvas mCanvas = new Canvas();
     public void setup(DragController dragController) {
         mDragController = dragController;
     }
@@ -102,7 +116,68 @@ public class DragLayer extends FrameLayout {
         loc[1] = 0;
         return getDescendantCoordRelativeToSelf(child, loc);
     }
-
+    private void drawDragView(View child, Canvas canvas, int padding) {
+        final Rect clipRect = sTempRect;
+        child.getDrawingRect(clipRect);
+        canvas.translate(-child.getScrollX() + padding / 2, -child.getScrollY() + padding / 2);
+        canvas.clipRect(clipRect, Region.Op.REPLACE);
+        child.draw(canvas);
+    }
+    public Bitmap createDragOutline(View child){
+        child.setDrawingCacheEnabled(true);
+        try {
+            Bitmap bitmap = child.getDrawingCache();
+            mCanvas.setBitmap(bitmap);
+            Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            paint.setAlpha(150);
+            mCanvas.drawRoundRect(new RectF(0,0,child.getWidth(),child.getHeight()),8,8,paint);
+            return bitmap;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    private Bitmap createDragBitmap(View child, AtomicInteger aPadding) {
+        int padding = aPadding.get();
+        Bitmap b = Bitmap.createBitmap(
+                child.getWidth() + padding,
+                child.getHeight() + padding,
+                Bitmap.Config.ARGB_8888);
+        mCanvas.setBitmap(b);
+        drawDragView(child,mCanvas,padding);
+        mCanvas.setBitmap(null);
+        return b;
+    }
+    public void beginDragShared(View child, Point relativeTouchPos,int[] tempXY, DragSource source){
+        child.clearFocus();
+        child.setPressed(false);
+        AtomicInteger padding = new AtomicInteger(DRAG_BITMAP_PADDING);
+        final Bitmap b = createDragBitmap(child, padding);
+        final int bmpWidth = b.getWidth();
+        final int bmpHeight = b.getHeight();
+        float scale = getLocationInDragLayer(child, tempXY);
+        int dragLayerX = Math.round(tempXY[0] -
+                (bmpWidth - scale * child.getWidth()) / 2);
+        int dragLayerY = Math.round(tempXY[1] -
+                (bmpHeight - scale * bmpHeight) / 2 - padding.get() / 2);
+        Log.e(TAG,"beginDragShared :: dragLayerX = : "+ dragLayerX +",dragLayerY =:" + dragLayerY +",mTempXY[0] = ;" + tempXY[0] +",mTempXY[1] =:" + tempXY[1]);
+        Point dragVisualizeOffset = null;
+        Rect dragRect = null;
+        if(child instanceof FavoriteItemView){
+            int iconSize = child.getWidth();
+            int top = child.getPaddingTop();
+            int left = (bmpWidth - iconSize) / 2;
+            int right = left + iconSize;
+            int bottom = top + iconSize;
+            dragLayerY += top;
+            dragVisualizeOffset = new Point(-padding.get() / 2, padding.get() / 2);
+            dragRect = new Rect(left, top, right, bottom);
+        }
+        ItemInfo info = (ItemInfo) child.getTag();
+        getParent().requestDisallowInterceptTouchEvent(false);
+        mDragController.startDrag(b, dragLayerX, dragLayerY, source, info,
+                DragController.DRAG_ACTION_MOVE, dragVisualizeOffset, dragRect, scale);
+    }
     public float getLocationInDragLayer(View child, int[] loc, boolean isIncludeScroll) {
         loc[0] = 0;
         loc[1] = 0;

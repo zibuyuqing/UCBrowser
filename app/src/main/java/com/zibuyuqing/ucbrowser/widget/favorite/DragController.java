@@ -193,8 +193,8 @@ public class DragController {
             mDragObject.x = coordinates[0];
             mDragObject.y = coordinates[1];
         }
-        mDragObject.dragView.move(mDragObject.x, mDragObject.y);
 
+        mDragObject.dragView.move(x, y);
         Log.e(TAG, "handleMoveEvent: x = " + x + ", y = " + y
                 + ", dragView = " + mDragObject.dragView + ", dragX = "
                 + mDragObject.x + ", dragY = " + mDragObject.y +"\n" +",dropTarget =:" + dropTarget +",offsetY =:" + offsetY);

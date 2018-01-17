@@ -287,7 +287,7 @@ public class FavoriteFolder extends RelativeLayout implements DropTarget {
     @Override
     public void onDragExit(DragObject dragObject) {
         Log.e(TAG,"onDragExit :: ");
-        close();
+//        close();
         mFolderContent.onDragExit(dragObject);
     }
 
