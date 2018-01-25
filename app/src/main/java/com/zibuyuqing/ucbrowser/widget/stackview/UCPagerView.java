@@ -33,7 +33,7 @@ public class UCPagerView extends FrameLayout  {
 
 
     public interface CallBack{
-        void onSelect(int key);
-        void onClose(int key);
+        void onSelect(long key);
+        void onClose(long key);
     }
 }

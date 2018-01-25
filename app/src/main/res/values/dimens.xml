@@ -19,6 +19,9 @@
     <dimen name="folder_icon_content_padding">4dp</dimen>
     <dimen name="folder_icon_item_preview_padding">4dp</dimen>
 
+    <dimen name="tab_thumbnail_width">240dp</dimen>
+    <dimen name="tab_thumbnail_height">160dp</dimen>
+
     <!-- font -->
     <dimen name="font_tiny">10sp</dimen>
     <dimen name="font_small">12sp</dimen>
@@ -26,4 +29,7 @@
     <dimen name="font_normal2">16sp</dimen>
     <dimen name="font_normal3">20sp</dimen>
     <dimen name="font_large">24sp</dimen>
+
+
+    <integer name="max_tab_count">8</integer>
 </resources>

@@ -7,7 +7,6 @@
         android:id="@+id/ivPagePreview"
         android:scaleType="centerCrop"
         android:layout_gravity="center"
-        android:src="@drawable/test_uc_screen"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
     <RelativeLayout

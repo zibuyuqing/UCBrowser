@@ -1,14 +1,15 @@
 package com.zibuyuqing.ucbrowser.ui.activity;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,16 +18,20 @@ import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.stackview.widget.UCStackView;
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
-import com.zibuyuqing.ucbrowser.adapter.UCPagerAdapter;
+import com.zibuyuqing.ucbrowser.adapter.UCTabAdapter;
 import com.zibuyuqing.ucbrowser.base.BaseActivity;
 import com.zibuyuqing.ucbrowser.base.BaseLayout;
 import com.zibuyuqing.ucbrowser.base.BaseFragment;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteFolderInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.FavoriteShortcutInfo;
 import com.zibuyuqing.ucbrowser.model.bean.favorite.ItemInfo;
-import com.zibuyuqing.ucbrowser.model.bean.pager.UCPager;
 import com.zibuyuqing.ucbrowser.ui.fragment.NewsListFragment;
 import com.zibuyuqing.ucbrowser.utils.Constants;
+import com.zibuyuqing.ucbrowser.web.BrowserWebViewFactory;
+import com.zibuyuqing.ucbrowser.web.Tab;
+import com.zibuyuqing.ucbrowser.web.TabController;
+import com.zibuyuqing.ucbrowser.web.WebViewController;
+import com.zibuyuqing.ucbrowser.web.WebViewFactory;
 import com.zibuyuqing.ucbrowser.widget.favorite.DragController;
 import com.zibuyuqing.ucbrowser.widget.favorite.DragLayer;
 import com.zibuyuqing.ucbrowser.widget.favorite.FavoriteFolder;
@@ -46,7 +51,7 @@ import java.util.List;
 import butterknife.BindView;
 
 public class HomeActivity extends BaseActivity implements View.OnClickListener, UCPagerView.CallBack,
-        UCStackView.OnChildDismissedListener, FavoriteWorkspace.OnItemClickListener {
+        UCStackView.OnChildDismissedListener, FavoriteWorkspace.OnItemClickListener ,WebViewController{
     private static final String TAG = "MainActivity";
 
 
@@ -62,10 +67,10 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     TabLayout mNewsTab;
 
     @BindView(R.id.tvPagerNum)
-    TextView mPagersNum;
+    TextView mTabNum;
 
     @BindView(R.id.flPagersManager)
-    FrameLayout mPagersManagerLayout;
+    FrameLayout mTabsManagerLayout;
 
     @BindView(R.id.ucStackView)
     UCStackView mUCStackView;
@@ -97,24 +102,29 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     @BindView(R.id.llTopSearchBar)
     BaseLayout mTopSearchBar;
 
+    @BindView(R.id.homeContentWrapper)
+    FrameLayout mContentWrapper;
 
     NewsPageAdapter mNewsPageAdapter;
 
 
-    UCPagerAdapter mPagerAdapter;
+    UCTabAdapter mTabAdapter;
 
 
 
     DragController mDragController;
 
 
-    private List<UCPager> mPagers = new ArrayList<>();
-    private List<Integer> mPagerIds = new ArrayList<>();
+    private List<Tab> mTabs = new ArrayList<>();
+    private List<Long> mTabIds = new ArrayList<>();
     private int mSelectPager = 0;
-    private boolean mPagersManagerUIShown = false;
+    private boolean mTabsManagerUIShown = false;
     private boolean mFolderOpened = false;
     private FavoriteFolder mOpenedFolder;
 
+    TabController mTabController;
+    private Tab mActiveTab;
+    private WebViewFactory mFactory;
     @Override
     protected int layoutId() {
         return R.layout.activity_main;
@@ -124,6 +134,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     protected void init() {
         initWindow();
         initViews();
+        mTabController = new TabController(this,this);
+        mFactory = new BrowserWebViewFactory(this);
     }
 
     private void initViews() {
@@ -161,8 +173,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                 }
         );
 
-        mPagerAdapter = new UCPagerAdapter(this,this);
-        mUCStackView.setAdapter(mPagerAdapter);
+        mTabAdapter = new UCTabAdapter(this,this);
+        mUCStackView.setAdapter(mTabAdapter);
         mUCStackView.setOnChildDismissedListener(this);
         mDragController = new DragController(this,mDragLayer);
         mDragLayer.setup(mDragController);
@@ -197,6 +209,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         findViewById(R.id.tvBack).setOnClickListener(this);
         findViewById(R.id.ivHome).setOnClickListener(this);
         findViewById(R.id.ivAddPager).setOnClickListener(this);
+
+        findViewById(R.id.tvBaidu).setOnClickListener(this);
 
         bindNewsPage();
         bindFavoriteItems();
@@ -259,11 +273,24 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             mFolderOpened = false;
             return;
         }
+        if(mActiveTab != null){
+            if(mActiveTab.canGoBack()){
+                mActiveTab.goBack();
+                return;
+            } else {
+                WebView webView = mActiveTab.getWebView();
+                if(webView != null && webView.getParent() != null) {
+                    mContentWrapper.removeView(webView);
+                    mContentWrapper.addView(mUCRootView);
+                    return;
+                }
+            }
+        }
         if(mUCRootView.getMode() == UCRootView.NEWS_MODE){
             mUCRootView.back2Normal();
         } else if(mUCRootView.getMode() == UCRootView.FAVORITE_MODE){
             mUCRootView.back2Home();
-        } else if(mPagersManagerUIShown){
+        } else if(mTabsManagerUIShown){
             hidePagers(true);
         } else {
             super.onBackPressed();
@@ -273,12 +300,12 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
      * 更新视图
      */
     private void refreshPages(){
-        int count = mPagers.size();
+        int count = mTabs.size();
         int olderSelect = mSelectPager;
         if(count > 0){
-            mPagers.clear();
+            mTabs.clear();
             for(int i = 0; i < count; i++){
-                mPagers.add(buildUCPager());
+                mTabs.add(buildTab());
             }
         }
         mSelectPager = olderSelect;
@@ -286,22 +313,24 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     /**
      * 进入页面管理界面，用动画改变选择页（可以理解为一张截图）的Y和scale
      */
-    public void showPagers(){
+    public void showTabs(){
         if(mUCStackView.isAnimating()){
             return;
         }
-        if(mPagers.size() <= 0){
-            addUCPager(false);
+        Log.e(TAG,"showTabs :: mTabs.size() =:" + mTabs.size());
+        if(mTabs.size() <= 0){
+            addTab(false);
         }
-        mPagersManagerLayout.setVisibility(View.VISIBLE);
-        refreshPages();
-        mPagerAdapter.updateData(mPagers);
+        mTabsManagerLayout.setVisibility(View.VISIBLE);
+        mTabsManagerLayout.bringToFront();
+        // refreshPages();
+        mTabAdapter.updateData(mTabs);
         getWindow().setStatusBarColor(getResources().getColor(R.color.pureBlack, null));
-        mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,true, new Runnable() {
+        mUCStackView.animateShow(mSelectPager, mUCRootView, mTabsManagerLayout,true, new Runnable() {
             @Override
             public void run() {
                 mUCRootView.setVisibility(View.GONE);
-                mPagersManagerUIShown = true;
+                mTabsManagerUIShown = true;
             }
         });
     }
@@ -310,32 +339,34 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
      *
      * @param animate 是否有动画，有动画时即UCRootView从下往上移
      */
-    private void addUCPager(boolean animate){
+    private void addTab(boolean animate){
         mUCRootView.setVisibility(View.VISIBLE);
         if(animate) {
            mUCRootView.animateShowFromBottomToTop(new Runnable() {
                @Override
                public void run() {
-                   UCPager pager = buildUCPager();
-                   mPagers.add(pager);
-                   mPagerIds.add(pager.getKey());
+                   Tab tab = buildTab();
+                   mTabs.add(tab);
+                   mTabIds.add(tab.getId());
                    hidePagers(false); // 把页面管理页隐藏
-                   mPagersNum.setText("" + mPagers.size()); // 更新页面数量
+                   mTabNum.setText("" + mTabs.size()); // 更新页面数量
+                   mActiveTab = tab;
                    initWindow(); // 更改状态栏颜色
                }
            });
         } else {
-            UCPager pager = buildUCPager();
-            mPagers.add(pager);
-            mPagerIds.add(pager.getKey());
+            Tab tab = buildTab();
+            mTabs.add(tab);
+            mActiveTab = tab;
+            mTabIds.add(tab.getId());
         }
     }
     private void removeUCPager(int index){
-        if(mPagers.size() <=0 || index < 0 || index >= mPagers.size()){
+        if(mTabs.size() <=0 || index < 0 || index >= mTabs.size()){
             return;
         }
-        mPagers.remove(index);
-        mPagerIds.remove(index);
+        mTabs.remove(index);
+        mTabIds.remove(index);
     }
 
     /**
@@ -344,52 +375,32 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
      * 当新建一页时，让我们的选择页置为新建的这一页，然后下次进入页面管理页时初始化进度
      * @return
      */
-    private UCPager buildUCPager(){
-        Bitmap pagerPreview = getScreenShot();
-        String title = "UC";
-        int websiteIcon = R.drawable.ic_home;
-        int key = mPagers.size();
-        UCPager pager = new UCPager(title,websiteIcon,pagerPreview,key);
-        mSelectPager = key;
-        return pager;
+    private Tab buildTab(){
+        Tab tab = mTabController.createNewTab();
+        return tab;
     }
 
-    /**
-     * 获取页面截图
-     * @return
-     */
-    private Bitmap getScreenShot() {
-        View view =  getWindow().getDecorView().getRootView();
-        view.setDrawingCacheEnabled(true);
-        try {
-            Bitmap bitmap = view.getDrawingCache();
-            return bitmap;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
     public void hidePagers(boolean animated){
         if(mUCStackView.isAnimating()){
             return;
         }
-        int pagerNum = mPagers.size();
+        int pagerNum = mTabs.size();
         if(animated){
-            mUCStackView.animateShow(mSelectPager, mUCRootView,mPagersManagerLayout,false, new Runnable() {
+            mUCStackView.animateShow(mSelectPager, mUCRootView, mTabsManagerLayout,false, new Runnable() {
                 @Override
                 public void run() {
-                    mPagersManagerLayout.setVisibility(View.GONE);
+                    mTabsManagerLayout.setVisibility(View.GONE);
                     mUCRootView.setVisibility(View.VISIBLE);
                     initWindow();
                 }
             });
         } else {
-            mPagersManagerLayout.setVisibility(View.GONE);
+            mTabsManagerLayout.setVisibility(View.GONE);
             mUCBottomBar.setVisibility(View.VISIBLE);
             initWindow();
         }
-        mPagersManagerUIShown = false;
-        mPagersNum.setText("" + pagerNum);
+        mTabsManagerUIShown = false;
+        mTabNum.setText("" + pagerNum);
     }
 
     private void bindNewsPage() {
@@ -432,7 +443,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             }
             case R.id.flWindowsNum:{
                 if(mUCRootView.getMode() != UCRootView.NEWS_MODE)
-                    showPagers();
+                    showTabs();
                 break;
             }
             case R.id.tvBack:{
@@ -443,23 +454,38 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
                 break;
             }
             case R.id.ivAddPager:{
-                addUCPager(true);
+                addTab(true);
+                break;
+            }
+            case R.id.tvBaidu: {
+                load(Constants.WEBSITES.get("baidu"));
+                break;
             }
         }
     }
-
+    private void load(String url){
+        if(mActiveTab != null) {
+            mContentWrapper.removeView(mUCRootView);
+            mActiveTab.loadUrl(url, null);
+            WebView webView = mActiveTab.getWebView();
+            if(webView == null){
+                return;
+            }
+            mContentWrapper.addView(webView);
+        }
+    }
     @Override
-    public void onSelect(int key) {
+    public void onSelect(long key) {
         if(mUCStackView.isAnimating()){
             return;
         }
-        int index = mPagerIds.indexOf(key);
+        int index = mTabIds.indexOf(key);
         mSelectPager = index;
         mUCStackView.selectPager(index, new Runnable() {
             @Override
             public void run() {
                 mUCRootView.setVisibility(View.VISIBLE);
-                mPagersManagerLayout.setVisibility(View.GONE);
+                mTabsManagerLayout.setVisibility(View.GONE);
                 initWindow();
             }
         });
@@ -467,13 +493,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     @Override
-    public void onClose(int key) {
+    public void onClose(long key) {
         Log.e(TAG,"onClose :: key = :" + key);
-        if(!mPagerIds.contains(key) || mUCStackView.isAnimating()){
+        if(!mTabIds.contains(key) || mUCStackView.isAnimating()){
             return;
         }
         Log.e(TAG,"onClose ::  start mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount() +",key =:" + key);
-        int index = mPagerIds.indexOf(key);
+        int index = mTabIds.indexOf(key);
         mUCStackView.closePager(index);
         Log.e(TAG,"onClose ::  end mSelectPager =:" + mSelectPager +",mUCStackView.getChildCount() =:" +mUCStackView.getChildCount());
     }
@@ -485,7 +511,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
         }
         Log.e(TAG,"onUCPagerClosed ---- mSelectPager =:" + mSelectPager);
         if(mUCStackView.getChildCount() <= 0){
-            addUCPager(true);
+            addTab(true);
         }
         removeUCPager(index);
     }
@@ -504,5 +530,81 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener, 
             ItemInfo info = (ItemInfo) view.getTag();
             Toast.makeText(HomeActivity.this,info.description,Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public Context getContext() {
+        return this;
+    }
+
+    @Override
+    public TabController getTabController() {
+        return mTabController;
+    }
+
+    @Override
+    public WebViewFactory getWebViewFactory() {
+        return mFactory;
+    }
+
+    @Override
+    public void onSetWebView(Tab tab, WebView view) {
+
+    }
+
+    @Override
+    public void onPageStarted(Tab tab, WebView webView, Bitmap favicon) {
+        tab.shouldUpdateThumbnail();
+    }
+
+    @Override
+    public void onPageFinished(Tab tab) {
+        Toast.makeText(HomeActivity.this,"加载完毕",Toast.LENGTH_SHORT).show();
+        tab.shouldUpdateThumbnail();
+    }
+
+    @Override
+    public void onProgressChanged(Tab tab) {
+        Log.e(TAG,"onProgressChanged --------------");
+    }
+
+    @Override
+    public void onReceivedTitle(Tab tab, String title) {
+        Log.e(TAG,"onReceivedTitle --------------title =:" + title);
+    }
+
+    @Override
+    public void onFavicon(Tab tab, WebView view, Bitmap icon) {
+
+    }
+
+    @Override
+    public Tab openTab(String url, boolean setActive, boolean useCurrent) {
+        return null;
+    }
+
+    @Override
+    public Tab openTab(String url, Tab parent, boolean setActive, boolean useCurrent) {
+        return null;
+    }
+
+    @Override
+    public boolean switchToTab(Tab tab) {
+        return false;
+    }
+
+    @Override
+    public void closeTab(Tab tab) {
+
+    }
+
+    @Override
+    public boolean shouldCaptureThumbnails() {
+        return false;
+    }
+
+    @Override
+    public void setActiveTab(Tab tab) {
+
     }
 }

@@ -16,6 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
+                android:id="@+id/tvBaidu"
                 android:drawableTop="@drawable/ic_baidu"
                 android:text="百度"
                 style="@style/WebsiteTextViewStyle"

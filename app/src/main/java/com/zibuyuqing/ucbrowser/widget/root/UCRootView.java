@@ -265,7 +265,7 @@ public class UCRootView extends RelativeLayout implements DragController.DragLis
             }
         }
         Log.e(TAG, "onInterceptTouchEvent :: ACTION_UP wasScrolling = :" + wasScrolling);
-        return wasScrolling || mCurrentMode == NORMAL_MODE;
+        return wasScrolling;
     }
 
     @Override

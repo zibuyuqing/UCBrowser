@@ -10,5 +10,5 @@ import java.util.List;
  */
 
 public interface NewsView extends BaseView{
-    void refreshNews(List<NewsItem> newsSummaries, boolean isRefresh);
+    void refreshNews(List<NewsItem> newsItems, boolean isRefresh);
 }
