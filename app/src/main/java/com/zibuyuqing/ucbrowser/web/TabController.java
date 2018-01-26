@@ -3,6 +3,7 @@ package com.zibuyuqing.ucbrowser.web;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 
 import com.zibuyuqing.ucbrowser.R;
@@ -26,10 +27,6 @@ public class TabController {
         void onThumbnailUpdated(Tab t);
     }
 
-    public interface OnTabCountChangedListener {
-        void onTabCountChanged();
-    }
-
     // Maximum number of tabs.
     private int mMaxTabs;
     // Private array of WebViews that are used as tabs.
@@ -39,16 +36,15 @@ public class TabController {
     // Current position in mTabs.
     private int mCurrentTab = -1;
     private OnThumbnailUpdatedListener mOnThumbnailUpdatedListener;
-    private OnTabCountChangedListener mOnTabCountChangedListener;
     /// M: add for browser memory optimization, maintain the free tabs index @ {
     private CopyOnWriteArrayList<Integer> mFreeTabIndex = new CopyOnWriteArrayList<Integer>();
     /// @ }
     // the main browser controller
-    private WebViewController mController;
+    private UiController mController;
     /**
      * Construct a new TabControl object
      */
-    public TabController(Context context,WebViewController controller) {
+    public TabController(Context context,UiController controller) {
         mController = controller;
         mMaxTabs = context.getResources().getInteger(R.integer.max_tab_count);
         mTabs = new ArrayList<Tab>(mMaxTabs);
@@ -102,7 +98,6 @@ public class TabController {
     }
     /**
      * Given a Tab, find it's position
-     * @param Tab to find
      * @return position of Tab or -1 if not found
      */
     public int getTabPosition(Tab tab) {
@@ -114,19 +109,7 @@ public class TabController {
     public boolean canCreateNewTab() {
         return mMaxTabs > mTabs.size();
     }
-    public void addPreloadedTab(Tab tab) {
-        for (Tab current : mTabs) {
-            if (current != null && current.getId() == tab.getId()) {
-                throw new IllegalStateException("Tab with id " + tab.getId() + " already exists: "
-                        + current.toString());
-            }
-        }
-        mTabs.add(tab);
-        if (mOnTabCountChangedListener != null) {
-            mOnTabCountChangedListener.onTabCountChanged();
-        }
-        tab.putInBackground();
-    }
+
     public Tab createNewTab() {
         return createNewTab(null);
     }
@@ -140,24 +123,21 @@ public class TabController {
         // Create a new tab and add it to the tab list
         Tab t = new Tab(mController, w, state);
         mTabs.add(t);
-        if (mOnTabCountChangedListener != null) {
-            mOnTabCountChangedListener.onTabCountChanged();
+        if (mController != null) {
+            mController.onTabCountChanged();
         }
         // Initially put the tab in the background.
         t.putInBackground();
         return t;
     }
 
-    /**
-     * Remove the parent child relationships from all tabs.
-     */
-    public void removeParentChildRelationShips() {
-        for (Tab tab : mTabs) {
-            tab.removeFromTree();
+    public boolean removeTab(int index){
+        Log.e(TAG,"removeTab :: index =:" + index +",getTabCount() =:" + getTabCount());
+        if(index < 0 || index >= getTabCount()){
+            return false;
         }
+        return removeTab(mTabs.get(index));
     }
-
-
     /**
      * Remove the tab from the list. If the tab is the current tab shown, the
      * last created tab will be shown.
@@ -182,17 +162,19 @@ public class TabController {
             // If a tab that is earlier in the list gets removed, the current
             // index no longer points to the correct tab.
             mCurrentTab = getTabPosition(current);
+            Log.e(TAG,"removeTab mCurrentTab =:" + mCurrentTab +",getTabCount() =:" + getTabCount());
+            if(mCurrentTab >= getTabCount()){
+                mCurrentTab --;
+            }
         }
 
         // destroy the tab
         t.destroy();
-        // clear it's references to parent and children
-        t.removeFromTree();
 
         // Remove it from the queue of viewed tabs.
         mTabQueue.remove(t);
-        if (mOnTabCountChangedListener != null) {
-            mOnTabCountChangedListener.onTabCountChanged();
+        if (mController != null) {
+            mController.onTabCountChanged();
         }
         return true;
     }
@@ -327,8 +309,8 @@ public class TabController {
                 Tab t = new Tab(mController, state);
                 tabMap.put(id, t);
                 mTabs.add(t);
-                if (mOnTabCountChangedListener != null) {
-                    mOnTabCountChangedListener.onTabCountChanged();
+                if (mController != null) {
+                    mController.onTabCountChanged();
                 }
                 // added the tab to the front as they are not current
                 mTabQueue.add(0, t);
@@ -582,7 +564,7 @@ public class TabController {
      * @param newTab The new tab. If newTab is null, the current tab is not
      *               set.
      */
-    boolean setCurrentTab(Tab newTab) {
+    public boolean setCurrentTab(Tab newTab) {
         return setCurrentTab(newTab, false);
     }
 
@@ -624,7 +606,11 @@ public class TabController {
 
     // Used by Tab.onJsAlert() and friends
     public void setActiveTab(Tab tab) {
-        mController.setActiveTab(tab);
+        mCurrentTab = mTabs.indexOf(tab);
+        WebView webView = getCurrentWebView();
+        if(webView != null && webView.getParent() != null){
+            ((ViewGroup)webView.getParent()).removeView(webView);
+        }
     }
 
     public void setOnThumbnailUpdatedListener(OnThumbnailUpdatedListener listener) {
@@ -639,9 +625,5 @@ public class TabController {
 
     public OnThumbnailUpdatedListener getOnThumbnailUpdatedListener() {
         return mOnThumbnailUpdatedListener;
-    }
-
-    public void setOnTabCountChangedListener(OnTabCountChangedListener listener) {
-        mOnTabCountChangedListener = listener;
     }
 }

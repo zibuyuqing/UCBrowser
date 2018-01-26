@@ -2,6 +2,7 @@ package com.zibuyuqing.ucbrowser.adapter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +13,7 @@ import com.zibuyuqing.stackview.adapter.StackAdapter;
 import com.zibuyuqing.stackview.widget.UCStackView;
 import com.zibuyuqing.ucbrowser.R;
 import com.zibuyuqing.ucbrowser.web.Tab;
-import com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView;
-
+import com.zibuyuqing.ucbrowser.web.UiController;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,12 +22,12 @@ import java.util.List;
  */
 
 public class UCTabAdapter extends StackAdapter<Tab> {
-    private UCPagerView.CallBack mCallBack;
+    private UiController mController;
     private int mCurrent;
     private List<Tab> mTabs;
-    public UCTabAdapter(Context context, UCPagerView.CallBack callBack) {
+    public UCTabAdapter(Context context, UiController controller) {
         super(context);
-        mCallBack = callBack;
+        mController = controller;
         mTabs = new ArrayList<Tab>();
         mCurrent = -1;
     }
@@ -54,8 +54,11 @@ public class UCTabAdapter extends StackAdapter<Tab> {
 
     @Override
     protected UCStackView.ViewHolder onCreateView(ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.layout_uc_pager,parent,false);
-        return new UCTabAdapter.TabViewHolder(view);
+        CardView card = (CardView) mInflater.inflate(R.layout.layout_recycler_card, parent, false);
+        card.setCardElevation(4);
+        card.setRadius(16);
+        mInflater.inflate(R.layout.layout_uc_pager, card,true);
+        return new UCTabAdapter.TabViewHolder(card);
     }
     class TabViewHolder extends UCStackView.ViewHolder implements View.OnClickListener {
 
@@ -94,12 +97,12 @@ public class UCTabAdapter extends StackAdapter<Tab> {
         @Override
         public void onClick(View view) {
             if(view == content){
-                if(mCallBack != null){
-                    mCallBack.onSelect(tab.getId());
+                if(mController != null){
+                    mController.selectTab(tab);
                 }
             } else if(view == ivClose){
-                if(mCallBack != null){
-                    mCallBack.onClose(tab.getId());
+                if(mController != null){
+                    mController.closeTab(tab);
                 }
             }
         }

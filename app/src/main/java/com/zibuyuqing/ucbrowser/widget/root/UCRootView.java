@@ -362,25 +362,7 @@ public class UCRootView extends RelativeLayout implements DragController.DragLis
     public boolean isAnimating() {
         return mScrollAnimator != null && mScrollAnimator.isRunning() || mIsAnimating;
     }
-    public void animateShowFromBottomToTop(final Runnable onCompleteRunnable){
-        ObjectAnimator animator = ObjectAnimator.ofFloat(
-                this,
-                "translationY",
-                ViewUtil.getScreenSize(mContext).y,
-                0);
-        animator.setDuration(500);
-        animator.start();
-        mIsAnimating = true;
-        animator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                mIsAnimating = false;
-                if(onCompleteRunnable != null){
-                    onCompleteRunnable.run();
-                }
-            }
-        });
-    }
+
     private boolean attachToFinal() {
         if(mDirection == SCROLL_VERTICALLY) {
             if(mNextMode == NEWS_MODE){

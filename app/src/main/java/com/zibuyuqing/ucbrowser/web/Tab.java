@@ -21,6 +21,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.ucbrowser.R;
 
 import java.util.HashMap;
@@ -131,6 +132,34 @@ public class Tab{
         public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
             return super.onCreateWindow(view, isDialog, isUserGesture, resultMsg);
         }
+
+        @Override
+        public void onProgressChanged(WebView view, int newProgress) {
+            super.onProgressChanged(view, newProgress);
+            mPageLoadProgress = newProgress;
+            if (newProgress == 100) {
+                mInPageLoad = false;
+                syncCurrentState(view, view.getUrl());
+            }
+            mWebViewController.onProgressChanged(Tab.this);
+            if (mUpdateThumbnail && newProgress == 100) {
+                mUpdateThumbnail = false;
+            }
+        }
+
+        @Override
+        public void onReceivedTitle(WebView view, String title) {
+            super.onReceivedTitle(view, title);
+            mCurrentState.mTitle = title;
+            mWebViewController.onReceivedTitle(Tab.this, title);
+        }
+
+        @Override
+        public void onReceivedIcon(WebView view, Bitmap icon) {
+            super.onReceivedIcon(view, icon);
+            mCurrentState.mFavicon = icon;
+            mWebViewController.onFavicon(Tab.this, view, icon);
+        }
     };
     public Tab(WebViewController webViewController,WebView view){
         this(webViewController,view,null);
@@ -144,10 +173,8 @@ public class Tab{
         mContext = mWebViewController.getContext();
         mCurrentState = new PageState(mContext);
         mInPageLoad = false;
-        mCaptureWidth = mContext.getResources().getDimensionPixelSize(
-                R.dimen.tab_thumbnail_width);
-        mCaptureHeight = mContext.getResources().getDimensionPixelSize(
-                R.dimen.tab_thumbnail_height);
+        mCaptureWidth = ViewUtil.getScreenSize(mContext).x;
+        mCaptureHeight = ViewUtil.getScreenSize(mContext).y;
         updateShouldCaptureThumbnails();
         restoreState(state);
         if (getId() == -1) {
@@ -176,8 +203,9 @@ public class Tab{
         String title = state.getString(CURRENT_TITLE);
         mCurrentState = new PageState(mContext,url,title);
     }
-    public boolean shouldUpdateThumbnail() {
-        return mUpdateThumbnail;
+    public void shouldUpdateThumbnail(boolean should) {
+        mUpdateThumbnail = should;
+        if(should) capture();
     }
 
     /**
@@ -189,24 +217,11 @@ public class Tab{
         mId = TabController.getNextId();
     }
     public void updateShouldCaptureThumbnails() {
-        Log.e(TAG,"updateShouldCaptureThumbnails ;; + " + mWebViewController.shouldCaptureThumbnails());
-        if (mWebViewController.shouldCaptureThumbnails()) {
-            synchronized (Tab.this) {
-                if (mCapture == null) {
-                    mCapture = Bitmap.createBitmap(mCaptureWidth, mCaptureHeight,
-                            Bitmap.Config.RGB_565);
-                    mCapture.eraseColor(Color.WHITE);
-                    /*
-                    if (mInForeground) {
-                        postCapture();
-                    }
-                    */
-                }
-            }
-        } else {
-            synchronized (Tab.this) {
-                mCapture = null;
-               //  deleteThumbnail();
+        synchronized (Tab.this) {
+            if (mCapture == null) {
+                mCapture = Bitmap.createBitmap(mCaptureWidth, mCaptureHeight,
+                        Bitmap.Config.RGB_565);
+                mCapture.eraseColor(Color.WHITE);
             }
         }
     }
@@ -288,24 +303,6 @@ public class Tab{
     /// @ }
 
     /**
-     * Remove the tab from the parent
-     */
-    void removeFromTree() {
-        // detach the children
-        /*
-        if (mChildren != null) {
-            for(Tab t : mChildren) {
-                t.setParent(null);
-            }
-        }
-        // remove itself from the parent list
-        if (mParent != null) {
-            mParent.mChildren.remove(this);
-        }
-        */
-        // deleteThumbnail();
-    }
-    /**
      * Dismiss the subWindow for the tab.
      */
     void dismissSubWindow() {
@@ -341,6 +338,7 @@ public class Tab{
         resume();
     }
     void putInBackground() {
+        Log.e(TAG,"putInBackground ------- mInForeground =:" + mInForeground);
         if (!mInForeground) {
             return;
         }
@@ -374,6 +372,9 @@ public class Tab{
         return mCurrentState.mUrl;
     }
 
+    public boolean checkUrlNotNull(){
+        return mCurrentState.checkUrlNotNull();
+    }
     public String getOriginalUrl() {
         if (mCurrentState.mOriginalUrl == null) {
             return getUrl();
@@ -400,10 +401,11 @@ public class Tab{
     }
 
     public void clearTabData(){
-        mWillBeClosed = true;
+        mUpdateThumbnail = false;
         mCurrentState.mUrl = "";
         mCurrentState.mOriginalUrl = "";
-        mCurrentState.mTitle = "";
+        mCurrentState.mTitle = "UC";
+        mCurrentState.mFavicon = getDefaultFavicon(mContext);
     }
     /**
      * @return TRUE if onPageStarted is called while onPageFinished is not
@@ -443,9 +445,6 @@ public class Tab{
             return mCapture;
         }
     }
-    public boolean isSnapshot() {
-        return false;
-    }
 
     private void setupHwAcceleration(View web) {
         if (web == null) return;
@@ -482,19 +481,12 @@ public class Tab{
             }
         }
     }
-    protected void capture() {
+    public void capture() {
         if (mMainView == null || mCapture == null) return;
-        if (mMainView.getMeasuredWidth() <= 0 || mMainView.getContentHeight() <= 0) {
-            return;
-        }
+        View view = mUpdateThumbnail ? mMainView:mWebViewController.getActivity().getWindow().getDecorView();
         Canvas c = new Canvas(mCapture);
-        final int left = mMainView.getScrollX();
-        final int top = mMainView.getScrollY();
         int state = c.save();
-        c.translate(-left, -top);
-        float scale = mCaptureWidth / (float) mMainView.getWidth();
-        c.scale(scale, scale, left, top);
-        mMainView.draw(c);
+        view.draw(c);
         c.restoreToCount(state);
         // manually anti-alias the edges for the tilt
         c.drawRect(0, 0, 1, mCapture.getHeight(), sAlphaPaint);
@@ -542,7 +534,7 @@ public class Tab{
             this("",getDefaultFavicon(context));
         }
         PageState(String url,Bitmap favicon){
-            this(url,"",favicon);
+            this(url,"UC",favicon);
         }
         PageState(Context context,String url,String title){
             this(url,title,getDefaultFavicon(context));
@@ -551,6 +543,9 @@ public class Tab{
             mUrl = mOriginalUrl = url;
             mTitle = title;
             mFavicon = favicon;
+        }
+        boolean checkUrlNotNull(){
+            return !TextUtils.isEmpty(mUrl);
         }
     }
 }

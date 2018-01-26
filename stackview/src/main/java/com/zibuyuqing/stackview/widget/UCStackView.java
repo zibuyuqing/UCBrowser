@@ -25,7 +25,6 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.OverScroller;
-import android.widget.Toast;
 
 import com.zibuyuqing.stackview.R;
 import com.zibuyuqing.stackview.SwipeHelper;
@@ -53,7 +52,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     public static final float DEFAULT_VIEW_MAX_SCALE = 0.9f;
     public static final float DEFAULT_VIEW_MIN_SCALE = 0.7f;
     private StackAdapter mStackAdapter;
-    private int mSelectPager = 0;
+    private int mSelectTab = 0;
     private List<ViewHolder> mViewHolders;
     private int mDuration;
     private OverScroller mScroller;
@@ -312,19 +311,19 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     /**
      * 当点击某一页面时，代表选择了这个页面，然后把UCRootView动画展示出来
-     * @param key 页面的ID
+     * @param index 页面的ID
      */
-    public void selectPager(int key,Runnable onComplete){
-        mSelectPager = key;
-        animateShow(mSelectPager, mPreviousView, mTargetView, false,onComplete);
+    public void selectTab(int index, Runnable onComplete){
+        mSelectTab = index;
+        animateShow(mSelectTab, mPreviousView, mTargetView, false,onComplete);
     }
 
     /**
      * 点击“X”按钮时关闭这个页面
-     * @param key
+     * @param index
      */
-    public void closePager(int key){
-        mSwipeHelper.dismissChildByClick(getChildAt(key));
+    public void closeTab(int index){
+        mSwipeHelper.dismissChildByClick(getChildAt(index));
         mIsAnimating = true;
     }
     /**
@@ -366,8 +365,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         }
         int duration = 400;
         int startDelay = 200;
-        mSelectPager = selectPager;
-        Log.e(TAG,"animateShow :: selectPager =:" + selectPager);
+        mSelectTab = selectPager;
+        Log.e(TAG,"animateShow :: selectTab =:" + selectPager);
         mPreviousView = from;
         mTargetView = to;
         //如果是显示这个页面，先要更新滑动的进度然后获取selected view的各种属性才是我们想要的
@@ -442,6 +441,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 if(onCompletedRunnable != null){
                     onCompletedRunnable.run();
                 }
+                layoutChildren();
                 mIsAnimating = false;
             }
 
@@ -488,7 +488,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
      */
     private void calculateInitialScrollP(){
         updateScrollProgressRange();
-        mScrollProgress = PROGRESS_START - mSelectPager * PROGRESS_STEP;
+        mScrollProgress = PROGRESS_START - mSelectTab * PROGRESS_STEP;
         mTotalMotionY = mScrollProgress * mViewMaxTop;
     }
 
@@ -970,10 +970,6 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         Point realSize = new Point();
         display.getRealSize(realSize);
         return realSize;
-    }
-
-    public int getSelectPager() {
-        return mSelectPager;
     }
 
     public static abstract class Adapter<VH extends ViewHolder> {

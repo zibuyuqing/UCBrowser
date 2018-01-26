@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView
+<com.zibuyuqing.ucbrowser.widget.stackview.UCTabCard
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="500dp">
     <ImageView
         android:id="@+id/ivPagePreview"
         android:scaleType="centerCrop"
@@ -37,4 +37,4 @@
             android:layout_width="@dimen/dimen_48dp"
             android:layout_height="match_parent" />
     </RelativeLayout>
-</com.zibuyuqing.ucbrowser.widget.stackview.UCPagerView>
+</com.zibuyuqing.ucbrowser.widget.stackview.UCTabCard>
