@@ -3,12 +3,15 @@ package com.zibuyuqing.ucbrowser.ui.activity;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,12 +19,16 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.zibuyuqing.common.utils.ViewUtil;
 import com.zibuyuqing.stackview.widget.UCStackView;
 import com.zibuyuqing.ucbrowser.R;
+import com.zibuyuqing.ucbrowser.adapter.HomeWebsiteAdapter;
 import com.zibuyuqing.ucbrowser.adapter.NewsPageAdapter;
 import com.zibuyuqing.ucbrowser.adapter.UCTabAdapter;
 import com.zibuyuqing.ucbrowser.base.BaseActivity;
@@ -48,14 +55,18 @@ import com.zibuyuqing.ucbrowser.widget.layout.UCBottomBar;
 import com.zibuyuqing.ucbrowser.widget.layout.UCHeadLayout;
 import com.zibuyuqing.ucbrowser.widget.layout.UCNewsLayout;
 import com.zibuyuqing.ucbrowser.widget.root.UCRootView;
+import com.zibuyuqing.ucbrowser.widget.stackview.UCTabCard;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
+import butterknife.OnClick;
 
-public class HomeActivity extends BaseActivity implements View.OnClickListener,
-        UCStackView.OnChildDismissedListener, FavoriteWorkspace.OnItemClickListener,UiController {
+public class HomeActivity extends BaseActivity implements
+        UCStackView.OnChildDismissedListener,
+        FavoriteWorkspace.OnItemClickListener,
+        UiController {
     private static final String TAG = "MainActivity";
 
 
@@ -109,6 +120,25 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
     @BindView(R.id.homeContentWrapper)
     FrameLayout mContentWrapper;
 
+    // 悬浮搜索条 webview加载后出现
+
+    @BindView(R.id.floatSearchBar)
+    LinearLayout mFloatSearchBar;
+
+    @BindView(R.id.tvFloatSearchTitle)
+    TextView mTvFloatSearchTitle;
+
+    @BindView(R.id.ivFloatSearchRefresh)
+    ImageView mIvFloatSearchRefresh;
+
+    @BindView(R.id.pbFloatSearchProgress)
+    ProgressBar mFloatSearchProgress;
+
+    @BindView(R.id.mainRoot)
+    FrameLayout mMainRootView;
+
+    @BindView(R.id.rvWebsiteList)
+    RecyclerView mWebsiteList;
     NewsPageAdapter mNewsPageAdapter;
 
 
@@ -149,6 +179,8 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
         mUCHeadLayout.initTranslationY(0, -100);
         mUCHeadLayout.initTranslationX(0, -ViewUtil.getScreenSize(this).x);
 
+        mWebsiteList.setAdapter(new HomeWebsiteAdapter(this,Constants.WEBSITES,this));
+        mWebsiteList.setLayoutManager(new GridLayoutManager(this,6));
         //可移动
         mTopSearchBar.setTransYEnable(true);
 
@@ -209,13 +241,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
         );
         mDragController.addDropTarget(mWorkspace);
         mDragController.addDragListener(mUCRootView);
-
-        findViewById(R.id.flWindowsNum).setOnClickListener(this);
-        findViewById(R.id.tvBack).setOnClickListener(this);
-        findViewById(R.id.ivHome).setOnClickListener(this);
-        findViewById(R.id.ivAddPager).setOnClickListener(this);
-
-        findViewById(R.id.tvBaidu).setOnClickListener(this);
 
         bindNewsPage();
         bindFavoriteItems();
@@ -279,6 +304,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
      */
     @Override
     public void onBackPressed() {
+        if(isAnimating()){
+            return;
+        }
         if (mOpenedFolder != null) {
             mOpenedFolder.close();
             mOpenedFolder = null;
@@ -295,7 +323,6 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
                 return;
             } else {
                 if(!mIsInMain) {
-                    mActiveTab.clearTabData();
                     switchToMain();
                     return;
                 }
@@ -315,22 +342,29 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
      * 进入页面管理界面，用动画改变选择页（可以理解为一张截图）的Y和scale
      */
     public void showTabs() {
-        if (mUCStackView.isAnimating()) {
+        if (isAnimating()) {
             return;
         }
         mActiveTab.capture();
         mTabAdapter.updateData(mTabController.getTabs());
         mTabsManagerLayout.bringToFront();
         mTabsManagerLayout.setVisibility(View.VISIBLE);
-        getWindow().setStatusBarColor(getResources().getColor(R.color.pureBlack, null));
+        getWindow().setStatusBarColor(getResources().getColor(R.color.windowGrayL, null));
         mUCStackView.animateShow(mTabController.getCurrentPosition(), mContentWrapper, mTabsManagerLayout, true, new Runnable() {
             @Override
             public void run() {
                 mContentWrapper.setVisibility(View.GONE);
+                mUCBottomBar.setVisibility(View.GONE);
                 mTabsManagerUIShown = true;
             }
         });
+        View selectedChild = mUCStackView.getSelectedChild();
+        if(selectedChild != null){
+            UCTabCard card = selectedChild.findViewById(R.id.ucTabCard);
+            card.active(true,350,40,null);
+        }
     }
+
     public void animateShowFromBottomToTop(View view,final Runnable onCompleteRunnable){
         mContentWrapper.setVisibility(View.VISIBLE);
         ObjectAnimator animator = ObjectAnimator.ofFloat(
@@ -390,7 +424,7 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
     }
 
     public void hideTabs(boolean animated) {
-        if (mUCStackView.isAnimating()) {
+        if (isAnimating()) {
             return;
         }
         if (animated) {
@@ -398,15 +432,19 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
                 @Override
                 public void run() {
                     mTabsManagerLayout.setVisibility(View.GONE);
-                    mContentWrapper.setVisibility(View.VISIBLE);
                     initWindow();
                 }
             });
+            View selectedChild = mUCStackView.getSelectedChild();
+            if(selectedChild != null){
+                UCTabCard card = selectedChild.findViewById(R.id.ucTabCard);
+                card.active(false,350,40,null);
+            }
         } else {
-            mTabsManagerLayout.setVisibility(View.GONE);
-            mUCBottomBar.setVisibility(View.VISIBLE);
             initWindow();
         }
+        mContentWrapper.setVisibility(View.VISIBLE);
+        mUCBottomBar.setVisibility(View.VISIBLE);
         mTabsManagerUIShown = false;
     }
 
@@ -438,38 +476,36 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
         }
     }
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.ivHome: {
-                Log.e(TAG, " onClick mode = :" + mUCRootView.getMode());
-                if (mUCRootView.getMode() == UCRootView.NEWS_MODE) {
-                    mUCRootView.back2Normal();
-                } else {
-                    mUCRootView.back2Home();
-                }
-                break;
+    @OnClick(R.id.ivHome) void clickHomeBtn(){
+        if(mIsInMain) {
+            if (mUCRootView.getMode() == UCRootView.NEWS_MODE) {
+                mUCRootView.back2Normal();
+            } else {
+                mUCRootView.back2Home();
             }
-            case R.id.flWindowsNum: {
-                if (mUCRootView.getMode() != UCRootView.NEWS_MODE)
-                    showTabs();
-                break;
-            }
-            case R.id.tvBack: {
-                hideTabs(true);
-                break;
-            }
-            case R.id.ivAddPager: {
-                addTab(true);
-                break;
-            }
-            case R.id.tvBaidu: {
-                load(Constants.WEBSITES.get("baidu"));
-                break;
-            }
+        } else {
+            switchToMain();
         }
     }
 
+    @OnClick(R.id.flWindowsNum) void clivkWinNumBtn(){
+        if (mUCRootView.getMode() != UCRootView.NEWS_MODE) showTabs();
+    }
+    @OnClick(R.id.tvBack) void clickBackBtn(){
+        hideTabs(true);
+    }
+
+    @OnClick(R.id.ivAddPager) void clickAddTabBtn(){
+        addTab(true);
+    }
+
+
+    @OnClick(R.id.ivFloatSearchRefresh) void reloadPage(){
+        WebView webView = mActiveTab.getWebView();
+        if(webView != null &&  mActiveTab.checkUrlNotNull()){
+            mActiveTab.reloadPage();
+        }
+    }
     private void load(String url) {
         if (mActiveTab != null) {
             mActiveTab.loadUrl(url, null);
@@ -483,8 +519,16 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
         WebView view = mActiveTab.getWebView();
         Log.e(TAG,"switchToTab ----------" + mUCRootView.getParent() +",view.getParent()= ;" + view.getParent() +",view =:" + view.getTitle());
         if(view != null && view.getParent() == null) {
-            mContentWrapper.addView(view);
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) view.getLayoutParams();
+            if(lp == null){
+                lp = new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT);
+            }
+            lp.topMargin = getResources().getDimensionPixelSize(R.dimen.dimen_48dp);
+            mContentWrapper.addView(view,lp);
         }
+        mFloatSearchBar.setVisibility(View.VISIBLE);
         mIsInMain = false;
     }
     private void switchToMain(){
@@ -497,6 +541,9 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
         if(view != null) {
             mContentWrapper.removeView(view);
         }
+        mActiveTab.clearTabData();
+        mActiveTab.stopLoading();
+        mFloatSearchBar.setVisibility(View.GONE);
         mIsInMain = true;
     }
 
@@ -550,25 +597,24 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
 
     @Override
     public void onPageStarted(Tab tab, WebView webView, Bitmap favicon) {
-
+        mFloatSearchProgress.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onPageFinished(Tab tab) {
-        Toast.makeText(HomeActivity.this, "加载完毕", Toast.LENGTH_SHORT).show();
+        mFloatSearchProgress.setVisibility(View.INVISIBLE);
         tab.shouldUpdateThumbnail(true);
         mTabAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void onProgressChanged(Tab tab) {
-        Log.e(TAG, "onProgressChanged --------------");
+       mFloatSearchProgress.setProgress(tab.getPageLoadProgress());
     }
 
     @Override
     public void onReceivedTitle(Tab tab, String title) {
-        Log.e(TAG, "onReceivedTitle --------------title =:" + title);
-
+        mTvFloatSearchTitle.setText(title);
     }
 
     @Override
@@ -577,8 +623,13 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
     }
 
     @Override
+    public void onWebsiteIconClicked(String url) {
+        load(url);
+    }
+
+    @Override
     public void selectTab(Tab tab) {
-        if (mUCStackView.isAnimating()) {
+        if (isAnimating()) {
             return;
         }
         int index = mTabController.getTabPosition(tab);
@@ -589,11 +640,17 @@ public class HomeActivity extends BaseActivity implements View.OnClickListener,
         } else {
             switchToMain();
         }
+        View selectedChild = mUCStackView.getSelectedChild();
+        if(selectedChild != null){
+            UCTabCard card = selectedChild.findViewById(R.id.ucTabCard);
+            card.active(false,350,40,null);
+        }
         mUCStackView.selectTab(index, new Runnable() {
             @Override
             public void run() {
                 Log.e(TAG,"onSelect ----- mActiveTab.checkUrlNotNull() =:" + mActiveTab.checkUrlNotNull() +"mActiveTab "+ mActiveTab.getTitle() +"," + mActiveTab.getUrl());
                 mContentWrapper.setVisibility(View.VISIBLE);
+                mUCBottomBar.setVisibility(View.VISIBLE);
                 mTabsManagerLayout.setVisibility(View.GONE);
                 initWindow();
             }

@@ -2,19 +2,18 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <FrameLayout
         android:id="@+id/homeContentWrapper"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
         <com.zibuyuqing.ucbrowser.widget.root.UCRootView
             android:id="@+id/ucRootView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/windowBg"
+            android:background="@color/windowLight"
             android:orientation="vertical"
             tools:context="com.zibuyuqing.ucbrowser.ui.activity.HomeActivity">
 
@@ -36,7 +35,10 @@
                 android:visibility="invisible"></include>
         </com.zibuyuqing.ucbrowser.widget.root.UCRootView>
     </FrameLayout>
-
+    <include
+        android:id="@+id/floatSearchBar"
+        android:visibility="gone"
+        layout="@layout/layout_float_searchbar"></include>
     <include
         android:id="@+id/llUCBottomBar"
         layout="@layout/layout_uc_bottom_bar"></include>

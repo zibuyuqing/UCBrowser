@@ -3,6 +3,7 @@ package com.zibuyuqing.ucbrowser.web;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.view.View;
 import android.webkit.WebView;
 
 

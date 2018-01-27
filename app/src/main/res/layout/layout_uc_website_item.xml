@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/tvHomeWebsiteItem"
+        android:drawableTop="@drawable/ic_dangdang"
+        android:text="当当"
+        style="@style/WebsiteTextViewStyle" />
+</LinearLayout>

@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.util.AttributeSet;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 /**
@@ -30,7 +31,10 @@ public class BrowserWebViewFactory implements WebViewFactory {
         w.setScrollbarFadingEnabled(true);
         w.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);
         // Enable the built-in zoom
-        w.getSettings().setBuiltInZoomControls(true);
+        WebSettings settings = w.getSettings();
+        settings.setBuiltInZoomControls(true);
+        settings.setDomStorageEnabled(true);
+        settings.setJavaScriptEnabled(true);
         /// M: Add to disable overscroll mode
         w.setOverScrollMode(View.OVER_SCROLL_NEVER);
         final PackageManager pm = mContext.getPackageManager();

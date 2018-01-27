@@ -8,7 +8,7 @@
     android:id="@+id/rlUCWeather"
     android:layout_height="64dp">
     <TextView
-        android:textColor="@color/windowBg"
+        android:textColor="@color/windowLight"
         android:layout_centerVertical="true"
         android:id="@+id/tvTemperature"
         android:gravity="center"
@@ -23,14 +23,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <TextView
-            android:textColor="@color/windowBg"
+            android:textColor="@color/windowLight"
             android:id="@+id/tvPmNumber"
             android:text="40"
             android:layout_marginLeft="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
-            android:textColor="@color/windowBg"
+            android:textColor="@color/windowLight"
             android:layout_marginLeft="8dp"
             android:layout_toRightOf="@id/tvPmNumber"
             android:id="@+id/tvPmDescription"
@@ -38,7 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
-            android:textColor="@color/windowBg"
+            android:textColor="@color/windowLight"
             android:layout_marginLeft="8dp"
             android:layout_below="@id/tvPmNumber"
             android:id="@+id/tvAddress"
@@ -46,7 +46,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <TextView
-            android:textColor="@color/windowBg"
+            android:textColor="@color/windowLight"
             android:layout_marginLeft="8dp"
             android:layout_below="@id/tvPmNumber"
             android:layout_toRightOf="@id/tvAddress"

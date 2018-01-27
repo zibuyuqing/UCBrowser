@@ -109,7 +109,7 @@ public class Tab{
             mInPageLoad = true;
             mUpdateThumbnail = true;
             mPageLoadProgress = INITIAL_PROGRESS;
-            mCurrentState = new PageState(url,favicon);
+            mCurrentState = new PageState(mContext,url,favicon);
             mLoadStartTime = SystemClock.uptimeMillis();
             mWebViewController.onPageStarted(Tab.this,view,favicon);
         }
@@ -400,11 +400,14 @@ public class Tab{
         return getDefaultFavicon(mContext);
     }
 
+    public int getPageLoadProgress(){
+        return mPageLoadProgress;
+    }
     public void clearTabData(){
         mUpdateThumbnail = false;
         mCurrentState.mUrl = "";
         mCurrentState.mOriginalUrl = "";
-        mCurrentState.mTitle = "UC";
+        mCurrentState.mTitle = mContext.getString(R.string.defaultWebTitle);
         mCurrentState.mFavicon = getDefaultFavicon(mContext);
     }
     /**
@@ -455,14 +458,22 @@ public class Tab{
             web.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
     }
+    public void stopLoading(){
+        if(mMainView != null && inPageLoad()){
+            mMainView.stopLoading();
+        }
+    }
 
+    public void reloadPage(){
+        mMainView.reload();
+    }
     private void syncCurrentState(WebView view,String url){
         if(mWillBeClosed){
             return;
         }
         mCurrentState.mUrl = view.getUrl();
         if(mCurrentState.mUrl == null){
-            mCurrentState.mUrl = "";
+            mCurrentState.mUrl = mContext.getString(R.string.defaultWebTitle);
         }
         mCurrentState.mOriginalUrl = view.getOriginalUrl();
         mCurrentState.mTitle = view.getTitle();
@@ -472,7 +483,6 @@ public class Tab{
         if (mMainView != null) {
             mPageLoadProgress = INITIAL_PROGRESS;
             mInPageLoad = true;
-            mCurrentState = new PageState(mContext, url, null);
             mWebViewController.onPageStarted(this, mMainView, null);
             try{
                 mMainView.loadUrl(url, headers);
@@ -481,20 +491,14 @@ public class Tab{
             }
         }
     }
+
     public void capture() {
         if (mMainView == null || mCapture == null) return;
-        View view = mUpdateThumbnail ? mMainView:mWebViewController.getActivity().getWindow().getDecorView();
+        View view = mWebViewController.getActivity().getWindow().getDecorView();
         Canvas c = new Canvas(mCapture);
         int state = c.save();
         view.draw(c);
         c.restoreToCount(state);
-        // manually anti-alias the edges for the tilt
-        c.drawRect(0, 0, 1, mCapture.getHeight(), sAlphaPaint);
-        c.drawRect(mCapture.getWidth() - 1, 0, mCapture.getWidth(),
-                mCapture.getHeight(), sAlphaPaint);
-        c.drawRect(0, 0, mCapture.getWidth(), 1, sAlphaPaint);
-        c.drawRect(0, mCapture.getHeight() - 1, mCapture.getWidth(),
-                mCapture.getHeight(), sAlphaPaint);
         c.setBitmap(null);
         mHandler.removeMessages(MSG_CAPTURE);
         TabController tc = mWebViewController.getTabController();
@@ -531,10 +535,10 @@ public class Tab{
         String mTitle;
         Bitmap mFavicon;
         PageState(Context context){
-            this("",getDefaultFavicon(context));
+            this(context,"",getDefaultFavicon(context));
         }
-        PageState(String url,Bitmap favicon){
-            this(url,"UC",favicon);
+        PageState(Context context,String url,Bitmap favicon){
+            this(url,context.getString(R.string.defaultWebTitle),favicon);
         }
         PageState(Context context,String url,String title){
             this(url,title,getDefaultFavicon(context));

@@ -3,7 +3,6 @@ package com.zibuyuqing.ucbrowser.adapter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.v7.widget.CardView;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -57,9 +56,10 @@ public class UCTabAdapter extends StackAdapter<Tab> {
         CardView card = (CardView) mInflater.inflate(R.layout.layout_recycler_card, parent, false);
         card.setCardElevation(4);
         card.setRadius(16);
-        mInflater.inflate(R.layout.layout_uc_pager, card,true);
+        mInflater.inflate(R.layout.layout_uc_tab, card,true);
         return new UCTabAdapter.TabViewHolder(card);
     }
+
     class TabViewHolder extends UCStackView.ViewHolder implements View.OnClickListener {
 
         View content;

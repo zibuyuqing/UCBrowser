@@ -40,7 +40,7 @@ public class UCHeadLayout extends BaseLayout {
         mUCCoverLayout = findViewById(R.id.rlUCCoverLayout);
         mCoverTip = mUCCoverLayout.findViewById(R.id.ucCoverTip);
         mCategoryContain = findViewById(R.id.llBezierContain);
-        mWebsiteContain = findViewById(R.id.llUCHeadWebsiteContain);
+        mWebsiteContain = findViewById(R.id.rvWebsiteList);
         mWebsiteLayout = findViewById(R.id.llUCWebsiteLayout);
     }
 

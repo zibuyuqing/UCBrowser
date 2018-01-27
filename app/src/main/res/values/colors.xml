@@ -3,12 +3,14 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="translation">#00000000</color>
-    <color name="windowBg">#ffffffff</color>
+    <color name="transparent">#00000000</color>
+    <color name="windowLight">#ffffffff</color>
+    <color name="windowGrayL">#1b1b1b</color>
+    <color name="windowGrayM">#151515</color>
     <color name="black">#dd000000</color>
     <color name="pureBlack">#ff000000</color>
     <color name="themePink">#ff8585</color>
-    <color name="themeBlue">#3694c7</color>
+    <color name="themeBlue">#41a7df</color>
     <color name="gray">#e2e2e2</color>
     <color name="deepGray">#686767</color>
     <color name="lightBlack">#55000000</color>

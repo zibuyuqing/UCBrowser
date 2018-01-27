@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/themeBlue"
+    android:orientation ="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/dimen_48dp">
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:background="@drawable/search_box_bg"
+        android:padding="@dimen/dimen_6dp"
+        android:layout_margin="@dimen/dimen_6dp"
+        android:layout_height="@dimen/dimen_34dp">
+        <ImageView
+            android:id="@+id/ivSecurite"
+            android:layout_gravity="center_vertical"
+            android:layout_width="@dimen/dimen_16dp"
+            android:layout_height="@dimen/dimen_16dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src ="@drawable/ic_securite" />
+        <TextView
+            android:id="@+id/tvFloatSearchTitle"
+            android:textColor="@color/windowLight"
+            android:gravity="center"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="@dimen/dimen_24dp"
+            android:textSize="16dp"
+            android:text="百度一下"
+            android:layout_toRightOf="@id/ivSecurite"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent" />
+        <ImageView
+            android:id="@+id/ivFloatSearchRefresh"
+            android:tint="@color/windowLight"
+            android:layout_gravity="center_vertical"
+            android:layout_width="@dimen/dimen_16dp"
+            android:layout_height="@dimen/dimen_16dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:src ="@drawable/ic_refresh" />
+    </RelativeLayout>
+    <ProgressBar
+        android:id="@+id/pbFloatSearchProgress"
+        style="@style/Base.Widget.AppCompat.ProgressBar.Horizontal"
+        android:max="100"
+        android:progress="50"
+        android:progressTint="@color/windowLight"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dimen_2dp" />
+</LinearLayout>

@@ -96,6 +96,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private View mTargetView;
     private boolean mIsAnimating = false;
     private OnChildDismissedListener mListener;
+    private boolean mLockLayout = false;
     public UCStackView(@NonNull Context context) {
         this(context, null);
     }
@@ -163,6 +164,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
      * 这个是核心方法，在这里我们根据每个view的位置，设置大小，transY ，以及点击范围
      */
     private void layoutChildren() {
+        if(mLockLayout){
+            return;
+        }
         int childCount = getChildCount();
         float progress;
         float transY;
@@ -363,8 +367,9 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         if(mIsAnimating){
             return;
         }
-        int duration = 400;
-        int startDelay = 200;
+        mIsAnimating = true;
+        int duration = 350;
+        int startDelay = 40;
         mSelectTab = selectPager;
         Log.e(TAG,"animateShow :: selectTab =:" + selectPager);
         mPreviousView = from;
@@ -441,19 +446,20 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                 if(onCompletedRunnable != null){
                     onCompletedRunnable.run();
                 }
+                mLockLayout = false;
                 layoutChildren();
                 mIsAnimating = false;
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
+                mLockLayout = true;
                 if(show) {
                     mPreviousView.setVisibility(GONE);
                 }
                 mTargetView.setVisibility(VISIBLE);
                 selectChild.setVisibility(VISIBLE);
                 to.setAlpha(1.0f);
-                mIsAnimating = true;
             }
         });
         if(show) {
@@ -892,7 +898,12 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         }
         return null;
     }
-
+    public View getSelectedChild(){
+        if(mSelectTab < 0 || mSelectTab >= getChildCount()){
+            return null;
+        }
+        return getChildAt(mSelectTab);
+    }
     @Override
     public View getChildAtPosition(MotionEvent ev) {
         return findChildAtPosition(ev);

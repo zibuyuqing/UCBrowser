@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:background="@color/pureBlack"
+    android:background="@color/windowGrayL"
     android:id="@+id/flPagersManager"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -23,13 +23,13 @@
     </com.zibuyuqing.stackview.widget.UCStackView>
     <RelativeLayout
         android:id="@+id/bottomBar"
-        android:background="@color/pureBlack"
+        android:background="@color/windowGrayM"
         android:layout_gravity="bottom"
         android:layout_width="match_parent"
         android:layout_height="@dimen/dimen_48dp">
         <TextView
             android:gravity="center"
-            android:textColor="@color/windowBg"
+            android:textColor="@color/windowLight"
             android:textSize="16dp"
             android:layout_alignParentStart="true"
             android:text="无痕浏览"
@@ -39,7 +39,7 @@
         <ImageView
             android:padding="12dp"
             android:id="@+id/ivAddPager"
-            android:tint="@color/windowBg"
+            android:tint="@color/windowLight"
             android:layout_centerInParent="true"
             android:src="@drawable/ic_menu_add"
             android:layout_width="@dimen/dimen_48dp"
@@ -47,7 +47,7 @@
         <TextView
             android:id="@+id/tvBack"
             android:gravity="center"
-            android:textColor="@color/windowBg"
+            android:textColor="@color/windowLight"
             android:textSize="16dp"
             android:layout_alignParentRight="true"
             android:text="返回"

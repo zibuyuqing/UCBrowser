@@ -5,6 +5,7 @@ package com.zibuyuqing.ucbrowser.web;
  */
 
 public interface UiController extends WebViewController{
+    void onWebsiteIconClicked(String url);
     void selectTab(Tab tab);
     void closeTab(Tab tab);
     void onTabCountChanged();

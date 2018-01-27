@@ -8,7 +8,7 @@
             android:id="@+id/ucCoverTip"
             android:layout_gravity="center"
             android:drawablePadding="12dp"
-            android:textColor="@color/windowBg"
+            android:textColor="@color/windowLight"
             android:drawableTop="@drawable/ic_scroll_up"
             android:text="刷新并进入UC头条"
             android:layout_width="wrap_content"

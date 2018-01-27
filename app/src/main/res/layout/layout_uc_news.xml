@@ -9,7 +9,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/dimen_36dp"
-        android:background="@color/windowBg">
+        android:background="@color/windowLight">
         <FrameLayout
             android:id="@+id/flUCNewsFlag"
             android:layout_width="match_parent"
@@ -21,7 +21,7 @@
                 android:background="@color/gray">
             </TextView>
             <TextView
-                android:background="@color/windowBg"
+                android:background="@color/windowLight"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"

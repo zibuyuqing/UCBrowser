@@ -1,4 +1,5 @@
 <resources>
+    <string name="defaultWebTitle">UC</string>
     <string name="app_name">UCBrowser</string>
     <string name="transition_photos">transition_animation_news_photos</string>
     <string name="loading">正在加载...</string>
