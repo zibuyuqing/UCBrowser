@@ -22,6 +22,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,13 +63,12 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.OnClick;
-
+import android.util.Log;
 public class HomeActivity extends BaseActivity implements
         UCStackView.OnChildDismissedListener,
         FavoriteWorkspace.OnItemClickListener,
         UiController {
     private static final String TAG = "MainActivity";
-
 
     // 头部
     @BindView(R.id.llUCHeadLayout)
@@ -319,10 +319,25 @@ public class HomeActivity extends BaseActivity implements
         }
         if (mActiveTab != null) {
             if (mActiveTab.canGoBack()) {
+                Log.e(TAG,mActiveTab.getCurrentUrl() +"---" + mActiveTab.getPreUrl());
+                if(mActiveTab.getPreUrl().equals(Tab.DEFAULT_BLANK_URL)){
+                    if(!mIsInMain) {
+                        // mActiveTab.popBrowsedHistory();
+                        switchToMain();
+                    }
+                } else {
+                    if(mIsInMain){
+                        switchToTab();
+
+                    }
+                }
+                Log.e(TAG,"isInMan = ;" + mIsInMain);
                 mActiveTab.goBack();
+                //mActiveTab.goBack();
                 return;
             } else {
                 if(!mIsInMain) {
+                    mActiveTab.clearTabData();
                     switchToMain();
                     return;
                 }
@@ -363,8 +378,38 @@ public class HomeActivity extends BaseActivity implements
             UCTabCard card = selectedChild.findViewById(R.id.ucTabCard);
             card.active(true,350,40,null);
         }
+        animateShowFromAlpha(mTabsManagerLayout.findViewById(R.id.bottomBar),
+                true,true,300,40,null);
     }
+    public void animateShowFromAlpha(final View view, final boolean show,
+                                     boolean animate,int duration,int startDelay, final Runnable onCompleteRunnable){
+        if(animate) {
+            float startAlpha = show ? 0.0f : 1.0f;
+            float finalAlpha = show ? 1.0f : 0.0f;
+            ObjectAnimator animator = ObjectAnimator.ofFloat(view, "alpha", startAlpha, finalAlpha);
+            animator.setDuration(duration);
+            animator.setStartDelay(startDelay);
+            animator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    if (onCompleteRunnable != null) {
+                        onCompleteRunnable.run();
+                    }
+                }
 
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (onCompleteRunnable != null) {
+                        onCompleteRunnable.run();
+                    }
+                }
+            });
+            animator.start();
+        } else {
+            view.setVisibility(show ? View.VISIBLE:View.GONE);
+            view.setAlpha(show ? 1.0f :0.0f);
+        }
+    }
     public void animateShowFromBottomToTop(View view,final Runnable onCompleteRunnable){
         mContentWrapper.setVisibility(View.VISIBLE);
         ObjectAnimator animator = ObjectAnimator.ofFloat(
@@ -440,6 +485,8 @@ public class HomeActivity extends BaseActivity implements
                 UCTabCard card = selectedChild.findViewById(R.id.ucTabCard);
                 card.active(false,350,40,null);
             }
+            animateShowFromAlpha(mTabsManagerLayout.findViewById(R.id.bottomBar),
+                    false,animated,350,40,null);
         } else {
             initWindow();
         }
@@ -477,6 +524,12 @@ public class HomeActivity extends BaseActivity implements
     }
 
     @OnClick(R.id.ivHome) void clickHomeBtn(){
+        if (mOpenedFolder != null) {
+            mOpenedFolder.close();
+            mOpenedFolder = null;
+            mFolderOpened = false;
+            return;
+        }
         if(mIsInMain) {
             if (mUCRootView.getMode() == UCRootView.NEWS_MODE) {
                 mUCRootView.back2Normal();
@@ -484,6 +537,7 @@ public class HomeActivity extends BaseActivity implements
                 mUCRootView.back2Home();
             }
         } else {
+            mActiveTab.insertBlank();
             switchToMain();
         }
     }
@@ -508,7 +562,8 @@ public class HomeActivity extends BaseActivity implements
     }
     private void load(String url) {
         if (mActiveTab != null) {
-            mActiveTab.loadUrl(url, null);
+            mActiveTab.clearWebHistory();
+            mActiveTab.loadUrl(url, null,true);
             switchToTab();
         }
     }
@@ -528,6 +583,7 @@ public class HomeActivity extends BaseActivity implements
             lp.topMargin = getResources().getDimensionPixelSize(R.dimen.dimen_48dp);
             mContentWrapper.addView(view,lp);
         }
+        mFloatSearchBar.setAlpha(1.0f);
         mFloatSearchBar.setVisibility(View.VISIBLE);
         mIsInMain = false;
     }
@@ -541,8 +597,8 @@ public class HomeActivity extends BaseActivity implements
         if(view != null) {
             mContentWrapper.removeView(view);
         }
-        mActiveTab.clearTabData();
         mActiveTab.stopLoading();
+      //  mActiveTab.loadBlank();
         mFloatSearchBar.setVisibility(View.GONE);
         mIsInMain = true;
     }
@@ -598,6 +654,7 @@ public class HomeActivity extends BaseActivity implements
     @Override
     public void onPageStarted(Tab tab, WebView webView, Bitmap favicon) {
         mFloatSearchProgress.setVisibility(View.VISIBLE);
+        mTvFloatSearchTitle.setText(getText(R.string.loading));
     }
 
     @Override
@@ -627,6 +684,13 @@ public class HomeActivity extends BaseActivity implements
         load(url);
     }
 
+    private void updateFloatSearchBar(){
+        int progress = mActiveTab.getPageLoadProgress();
+        if (progress == 100){
+            mFloatSearchProgress.setVisibility(View.GONE);
+        }
+        mTvFloatSearchTitle.setText(mActiveTab.getTitle());
+    }
     @Override
     public void selectTab(Tab tab) {
         if (isAnimating()) {
@@ -635,15 +699,11 @@ public class HomeActivity extends BaseActivity implements
         int index = mTabController.getTabPosition(tab);
         mActiveTab = tab;
         mTabController.setActiveTab(mActiveTab);
-        if(mActiveTab.checkUrlNotNull()) {
+        if(!mActiveTab.isBlank()) {
+            updateFloatSearchBar();
             switchToTab();
         } else {
             switchToMain();
-        }
-        View selectedChild = mUCStackView.getSelectedChild();
-        if(selectedChild != null){
-            UCTabCard card = selectedChild.findViewById(R.id.ucTabCard);
-            card.active(false,350,40,null);
         }
         mUCStackView.selectTab(index, new Runnable() {
             @Override
@@ -652,9 +712,17 @@ public class HomeActivity extends BaseActivity implements
                 mContentWrapper.setVisibility(View.VISIBLE);
                 mUCBottomBar.setVisibility(View.VISIBLE);
                 mTabsManagerLayout.setVisibility(View.GONE);
+                mTabsManagerUIShown = false;
                 initWindow();
             }
         });
+        View selectedChild = mUCStackView.getSelectedChild();
+        if(selectedChild != null){
+            UCTabCard card = selectedChild.findViewById(R.id.ucTabCard);
+            card.active(false,350,40,null);
+        }
+        animateShowFromAlpha(mTabsManagerLayout.findViewById(R.id.bottomBar),
+                false,true,300,40,null);
         Log.e(TAG, "onSelect :: key =:" + tab.getId());
     }
 

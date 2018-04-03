@@ -93,7 +93,7 @@ public class UCHeadLayout extends BaseLayout {
                 // 隐藏提示布局
                 mUCCoverLayout.setVisibility(GONE);
                 // foreground 逐渐显现，布局变黑
-                mForeground.setAlpha((int) (ALPHA_255 * Math.abs(rate)));
+                // mForeground.setAlpha((int) (ALPHA_255 * Math.abs(rate)));
                 float adjustRate = 1.0f + rate * 0.05f;
 
                 // 布局内容逐渐变小

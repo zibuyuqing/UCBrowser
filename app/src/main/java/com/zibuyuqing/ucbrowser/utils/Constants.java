@@ -3,6 +3,7 @@ package com.zibuyuqing.ucbrowser.utils;
 import com.zibuyuqing.ucbrowser.R;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -27,7 +28,7 @@ public class Constants {
             R.drawable.ic_souhu,
             R.drawable.ic_more_site,
     };
-    public static final Map<String,String> WEBSITES = new HashMap<String, String>(){
+    public static final Map<String,String> WEBSITES = new LinkedHashMap<String, String>(){
         {
             // 百度
             put("百度","https://www.baidu.com/");
@@ -56,4 +57,6 @@ public class Constants {
             put("更多","http://www.hao123.com/");
         }
     };
+
+    public static final String APP_CACHE_DIRNAME = "cache";
 }

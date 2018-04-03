@@ -26,11 +26,16 @@ import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.OverScroller;
 
+import com.orhanobut.logger.AndroidLogAdapter;
+import com.orhanobut.logger.FormatStrategy;
+import com.orhanobut.logger.Logger;
+import com.orhanobut.logger.PrettyFormatStrategy;
 import com.zibuyuqing.stackview.R;
 import com.zibuyuqing.stackview.SwipeHelper;
 import com.zibuyuqing.stackview.adapter.StackAdapter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -44,11 +49,12 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     public static final int INVALID_POSITION = -1;
     private static final int LAYOUT_ALL = 0;
     private static final int LAYOUT_PRE_ACTIVE = -1;
-    public static final int LAYOUT_AFTER_ACTIVE = 1;
-    public static final float PROGRESS_STEP = 0.2f; // 每个页面的进度差
+    public static final int LAYOUT_AFTER_ACTIVE = 2;
+    public static final int LAYOUT_SINGLE_ACTIVE = 1;
+    public static final float PROGRESS_STEP = 0.20f; // 每个页面的进度差
     public static final float BASE_MAX_SCROLL_P = 0.72f; // 用于标记参考页最大能滑动的进度
-    public static final float BASE_MIN_SCROLL_P = 0.34f; // 用于标记参考页最小能滑动的进度
-    public static final float PROGRESS_START = 0.6f; // 规定一个定值，用于计算选择页初始进度
+    public static final float BASE_MIN_SCROLL_P = 0.2f; // 用于标记参考页最小能滑动的进度
+    public static final float PROGRESS_START = 0.45f; // 规定一个定值，用于计算选择页初始进度
     public static final float DEFAULT_VIEW_MAX_SCALE = 0.9f;
     public static final float DEFAULT_VIEW_MIN_SCALE = 0.7f;
     private StackAdapter mStackAdapter;
@@ -86,6 +92,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
     private float mLastMotionX;
     private float mInitialMotionY;
     private boolean mIsScrolling;
+    private boolean mIsFling;
     private boolean mIsOverScroll = false;
     ObjectAnimator mScrollAnimator;
     private int mActivePager; // 标记横向滑动时的拖拽页
@@ -110,7 +117,14 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mContext = context;
         init();
     }
-
+    private void initLogger(){
+        FormatStrategy formatStrategy = PrettyFormatStrategy.newBuilder()
+                .showThreadInfo(false)
+                .methodCount(3)
+                .methodOffset(7)
+                .build();
+        Logger.addLogAdapter(new AndroidLogAdapter(formatStrategy));
+    }
     private void init() {
         mViewHolders = new ArrayList<ViewHolder>();
         // 初始化 scroller
@@ -134,6 +148,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         mSwipeHelper = new SwipeHelper(mContext, SwipeHelper.X, this, densityScale, mTouchSlop);
         mSwipeHelper.setMinAlpha(1f);
         mLinearOutSlowInInterpolator = AnimationUtils.loadInterpolator(mContext, R.anim.linear_out_show_in);
+        initLogger();
     }
 
     @Override
@@ -149,8 +164,8 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
         // 如果首次构建view的时候我们需要先初始化滑动进度
+        super.onLayout(changed, left, top, right, bottom);
         if(mIsFirstLayout) {
             calculateInitialScrollP();
             mIsFirstLayout = false;
@@ -170,18 +185,16 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         int childCount = getChildCount();
         float progress;
         float transY;
-        float transZ;
         View child;
         mChildTouchRect = new Rect[childCount];// 子view的触控范围
-        Log.e(TAG,"layoutChildren :: layoutChildren :: mLayoutState =:" + mLayoutState);
+        // Logger.e(TAG,"layoutChildren :: layoutChildren :: mLayoutState =:" + mLayoutState);
         for (int i = 0; i < childCount; i++) {
-
             child = getChildAt(i);
-
-            // 设置点击范围
             Rect rect = new Rect();
             child.getHitRect(rect);
             mChildTouchRect[i] = rect;
+
+            // 设置点击范围
 
             // 根据 mLayoutState 决定要更新哪些view的属性，在删除页面时用到
             switch (mLayoutState){
@@ -194,14 +207,36 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                     if(i < mActivePager){
                         continue;
                     }
+                    break;
+                case LAYOUT_SINGLE_ACTIVE :
+                    if(i != mSelectTab){
+                        continue;
+                    }
+                    break;
             }
             progress = getScrollP();
+            float scale = calculateProgress2Scale(i,progress);
+            if(scale < mViewMinScale){
+                scaleView(mViewMinScale, child);
+                translateViewY(mViewMinTop, child);
+                child.setVisibility(GONE);
+                Log.e(TAG,"滤过第" + i +"个child" + mIsScrolling);
+                continue;
+            }
+            if(scale > mViewMaxScale){
+                scaleView(mViewMaxScale, child);
+                translateViewY(mViewMaxTop, child);
+                child.setVisibility(GONE);
+                Log.e(TAG,"滤过第" + i +"个child" + mIsScrolling);
+                continue;
+            }
+            if(child.getVisibility() == GONE){
+                child.setVisibility(VISIBLE);
+            }
             transY = calculateProgress2TransY(i,progress);
-            transZ = calculateProgress2TransZ(progress);
             Log.e(TAG, "layoutChildren :: progress =:" + progress + ",transY =:" + transY);
             translateViewY(transY, child);
-            //translateViewZ(transZ, child);
-            scaleView(calculateProgress2Scale(i,progress), child);
+            scaleView(scale, child);
         }
         invalidate();
     }
@@ -371,20 +406,20 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
         int duration = 350;
         int startDelay = 40;
         mSelectTab = selectPager;
-        Log.e(TAG,"animateShow :: selectTab =:" + selectPager);
         mPreviousView = from;
         mTargetView = to;
         //如果是显示这个页面，先要更新滑动的进度然后获取selected view的各种属性才是我们想要的
+        mLayoutState = LAYOUT_ALL;
         if(show) {
             calculateInitialScrollP();
             layoutChildren();
         }
-
+        mLayoutState = LAYOUT_SINGLE_ACTIVE;
         final View selectChild = getChildAt(selectPager);
         float nextChildEndTransY = 0;
         float nextChildStartTransY = 0;
-        int endRange = show ? Math.min(selectPager + 2,getChildCount()) : getChildCount();
-
+        int endRange = show ? Math.min(selectPager + 3,getChildCount()) : getChildCount();
+        Log.e(TAG,"animateShow :: selectTab =:" + selectPager +",endRange =:" + endRange);
         // 如果选择的页面不是最后一页，我们在进入此界面时，会看到选择页以下的view有个上移动画
         for(int i= selectPager ;i < endRange; i++){
             View nextChild = getChildAt(i);
@@ -447,6 +482,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
                     onCompletedRunnable.run();
                 }
                 mLockLayout = false;
+                mLayoutState = LAYOUT_ALL;
                 layoutChildren();
                 mIsAnimating = false;
             }
@@ -819,7 +855,7 @@ public class UCStackView extends FrameLayout implements SwipeHelper.Callback {
 
     @Override
     public void computeScroll() {
-        Log.e(TAG, "computeScroll :: mIsOverScroll :" + mIsOverScroll);
+        Log.e(TAG, "computeScroll :: mIsOverScroll :" + mIsOverScroll +".mScroller.computeScrollOffset() =:" + mScroller.computeScrollOffset());
         if (mScroller.computeScrollOffset()) {
             if(mIsOverScroll){
                 // 如果 overscroll 滑动到指定位置

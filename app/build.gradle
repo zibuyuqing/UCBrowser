@@ -13,7 +13,7 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -49,7 +49,8 @@ dependencies {
     // glide
     implementation 'com.github.bumptech.glide:glide:4.5.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.5.0'
-
+    // logger
+    compile 'com.orhanobut:logger:2.1.1'
     compile project(':common')
     compile project(':stackview')
 }

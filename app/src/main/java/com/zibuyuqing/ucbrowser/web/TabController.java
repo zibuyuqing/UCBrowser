@@ -114,9 +114,11 @@ public class TabController {
         return createNewTab(null);
     }
     public Tab createNewTab(Bundle state) {
+        /*
         if (!canCreateNewTab()) {
             return null;
         }
+        */
 
         final WebView w = createNewWebView();
 

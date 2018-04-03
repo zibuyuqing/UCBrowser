@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainRoot"
     android:layout_width="match_parent"
+    android:background="@color/windowLight"
     android:layout_height="match_parent">
     <FrameLayout
         android:id="@+id/homeContentWrapper"
@@ -11,9 +12,9 @@
         android:layout_height="match_parent">
         <com.zibuyuqing.ucbrowser.widget.root.UCRootView
             android:id="@+id/ucRootView"
+            android:background="@color/windowLight"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/windowLight"
             android:orientation="vertical"
             tools:context="com.zibuyuqing.ucbrowser.ui.activity.HomeActivity">
 
